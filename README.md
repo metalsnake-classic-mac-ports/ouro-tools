@@ -2,7 +2,8 @@
 
 Tools shared by the [Ouro ports](https://github.com/metalsnake-classic-mac-ports)
 (Ouro-S.C.Out, Ouro-Harry-the-Handsome-Executive, ...): the emulators
-that run the original games, and the place for the Mac ROMs and system
+that run the original games, the analysis library that reads, disassembles
+and runs their code (`re/`), and the place for the Mac ROMs and system
 disks they need. The ports find this folder as `../ouro-tools` from their
 repository root, or through the environment variable `OURO_TOOLS`.
 
@@ -35,7 +36,7 @@ kanjitalk755/macemu and where it comes from.
 | `roms/PERFORMA.ROM` | a 68040 Mac ROM for Basilisk II, e.g. Performa 630 (1 MB) | yours |
 | `roms/newworld86.rom` | a New World ROM for SheepShaver | yours |
 | `systems/System70_boot.dsk` | System 7.0 boot floppy | yours |
-| `systems/system75-sound.dsk` | System 7.5 "Disk Tools" System Folder + Sound Manager 3.1, 20 MB (Basilisk II plays sound only through Sound Manager 3.x) | Ouro-S.C.Out's `re/tools/emulator/make-sound-disk.sh`, from the System 7.5 floppy and Sound Manager 3.1 |
+| `systems/system75-sound.dsk` | System 7.5 "Disk Tools" System Folder + Sound Manager 3.1, 20 MB (Basilisk II plays sound only through Sound Manager 3.x) | `make-sound-disk.sh MacOS75.ZIP Sound_Manager_3.1.sea_.hqx` (both were free Apple downloads; `brew install unar hfsutils`) |
 | `systems/macos904.iso` | a Mac OS 9.0.4 install CD | yours |
 | `systems/macos9-clean.dsk` | Mac OS 9.0.4 freshly installed on a 2 GB Mac OS Extended image ("Update Apple Hard Disk Drivers" off) | installed in SheepShaver |
 
@@ -74,6 +75,33 @@ Notes that cost time:
   quit until it is selected.
 - The monitor's `quit` ends the emulator without shutting the Mac down:
   the next Mac OS 9 boot shows "did not shut down properly" (click Done).
+
+## Analysis library (`re/`)
+
+General tools for reverse engineering a classic Mac game; a port's
+`re/tools/` adds only what is the game's and finds this folder as
+`../ouro-tools` (or `OURO_TOOLS`). Python 3 with `capstone` and `unicorn`
+in a venv, run with `python3 -I`.
+
+| Script | What |
+|---|---|
+| `unpack_app.py` | application (MacBinary / resource fork / raw) → a work layout: `code/segNN.bin`, `rsrc/` |
+| `macres.py` | list / dump the resources of a MacBinary file |
+| `disasm.py` | 68k disassembly with Toolbox trap names and jump table targets |
+| `xref.py` | callers of a 68k routine across segments |
+| `thinkc_globals.py` | THINK C globals from DATA / ZERO / DREL |
+| `macsbug_syms.py` | 68k routine names from MacsBug symbols (CodeWarrior, MPW) |
+| `pict.py`, `topng.py` | PICT v2 (8-bit) → PNG; raw pixels + `pltt` → PNG |
+| `machine.py` | 68k code in Unicorn for differential tests: segments, A5 globals, jump table, trap stubs |
+| `ghidra/` | 68k: replace A-line traps, decompile all segments headless |
+| `ppc/pef_traceback.py` | PEF: routine starts and names from traceback tables |
+| `ppc/run_ghidra.sh`, `ppc/ghidra/` | PEF into Ghidra: names, TOC, TVectors, globals, a struct; decompile everything |
+| `ppc/ppcdis.py`, `ppc/ppc_switch.py` | PowerPC disassembly with names; CodeWarrior switch tables |
+| `ppc/ppcmachine.py` | PowerPC code in Unicorn for differential tests |
+
+The method around them (how to find a game's loop, how to build a
+differential test) is in the classic-mac-port skill, which is not
+published yet.
 
 ## Fork check
 
