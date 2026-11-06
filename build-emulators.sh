@@ -1,8 +1,13 @@
 #!/bin/sh
-# Build the emulators the Ouro ports use, into this folder:
-#   basilisk/     Basilisk II  } from metalsnake-classic-mac-ports/ouro-macemu,
-#   sheepshaver/  SheepShaver  } branch ouro (Unix build, SDL2 via sdl2-compat, no JIT)
-#   systemless/   systemless 0.109.0 with its debugger socket
+# Build the emulators the Ouro ports use:
+#   Basilisk II and SheepShaver in the ouro-macemu checkout next to this
+#   folder (OURO_MACEMU, default ../ouro-macemu; cloned with branch ouro if
+#   missing): BasiliskII/src/Unix/BasiliskII, SheepShaver/src/Unix/SheepShaver
+#   (Unix build, SDL2 via sdl2-compat, no JIT);
+#   systemless 0.109.0 with its debugger socket into systemless/ here.
+#
+# An existing checkout is built as it is (no pull, no branch switch), so
+# work in progress there is never touched.
 #
 # Usage: build-emulators.sh [basilisk|sheepshaver|systemless|all]   (default: all)
 # Needs: brew install autoconf automake libtool mpfr gmp sdl2-compat
@@ -11,15 +16,14 @@ set -e
 cd "$(dirname "$0")"
 TOOLS="$(pwd)"
 WHAT="${1:-all}"
-URL=https://github.com/metalsnake-classic-mac-ports/ouro-macemu.git
+MACEMU="${OURO_MACEMU:-$(cd .. && pwd)/ouro-macemu}"
 
-checkout() {   # DIR: clone or update the ouro branch
-    if [ -d "$1/.git" ]; then
-        git -C "$1" checkout -q ouro
-        git -C "$1" pull -q --ff-only
-    else
-        git clone -q -b ouro "$URL" "$1"
+checkout() {
+    if [ ! -d "$MACEMU/.git" ]; then
+        git clone -q -b ouro https://github.com/metalsnake-classic-mac-ports/ouro-macemu.git "$MACEMU"
+        git -C "$MACEMU" remote add upstream https://github.com/kanjitalk755/macemu.git
     fi
+    echo "building $MACEMU at $(git -C "$MACEMU" rev-parse --abbrev-ref HEAD) $(git -C "$MACEMU" log -1 --format=%h)"
 }
 
 # slirp (networking) is K&R C: compile C with gnu89.
@@ -28,26 +32,31 @@ export CPPFLAGS="-I/opt/homebrew/include" LDFLAGS="-L/opt/homebrew/lib"
 
 # The Makefiles have no header dependencies: always build from clean.
 if [ "$WHAT" = basilisk ] || [ "$WHAT" = all ]; then
-    checkout basilisk
-    (cd basilisk/BasiliskII/src/Unix &&
+    checkout
+    (cd "$MACEMU/BasiliskII/src/Unix" &&
      NO_CONFIGURE=1 ./autogen.sh &&
      ./configure --enable-sdl-video --enable-sdl-audio --without-gtk \
          --disable-jit-compiler --without-mon --without-esd --without-x &&
      make clean >/dev/null && make -j8)
-    echo "built $TOOLS/basilisk/BasiliskII/src/Unix/BasiliskII"
+    echo "built $MACEMU/BasiliskII/src/Unix/BasiliskII"
 fi
 if [ "$WHAT" = sheepshaver ] || [ "$WHAT" = all ]; then
-    checkout sheepshaver
-    make -C sheepshaver/SheepShaver links >/dev/null
-    (cd sheepshaver/SheepShaver/src/Unix &&
+    checkout
+    make -C "$MACEMU/SheepShaver" links >/dev/null
+    # `make links` replaces a tracked file by a link and adds Windows/m4:
+    # keep both out of `git status` so they are not committed by mistake.
+    git -C "$MACEMU" update-index --assume-unchanged SheepShaver/src/kpx_cpu/src/cpu/jit/x86/codegen_x86.h
+    grep -qx '/SheepShaver/src/Windows/m4' "$MACEMU/.git/info/exclude" 2>/dev/null ||
+        echo '/SheepShaver/src/Windows/m4' >> "$MACEMU/.git/info/exclude"
+    (cd "$MACEMU/SheepShaver/src/Unix" &&
      NO_CONFIGURE=1 ./autogen.sh &&
      ./configure --enable-sdl-video --enable-sdl-audio --without-gtk \
          --without-mon --without-esd --without-x --disable-jit &&
      make clean >/dev/null && make -j8)
-    echo "built $TOOLS/sheepshaver/SheepShaver/src/Unix/SheepShaver"
+    echo "built $MACEMU/SheepShaver/src/Unix/SheepShaver"
 fi
 if [ "$WHAT" = systemless ] || [ "$WHAT" = all ]; then
     # Homebrew's systemless has no debugger socket (Harry's re/tools/sl_peek.py needs it).
-    cargo install systemless --version 0.109.0 --locked --features debug-server --root systemless
+    cargo install systemless --version 0.109.0 --locked --features debug-server --root "$TOOLS/systemless"
     echo "built $TOOLS/systemless/bin/systemless"
 fi

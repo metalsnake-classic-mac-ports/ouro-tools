@@ -30,8 +30,7 @@ kanjitalk755/macemu and where it comes from.
 
 | Path | What | Source |
 |---|---|---|
-| `basilisk/` | Basilisk II (68k Macs); the program is `basilisk/BasiliskII/src/Unix/BasiliskII` | `build-emulators.sh` |
-| `sheepshaver/` | SheepShaver (PowerPC Macs); the program is `sheepshaver/SheepShaver/src/Unix/SheepShaver` | `build-emulators.sh` |
+| `../ouro-macemu/` | the [ouro-macemu](https://github.com/metalsnake-classic-mac-ports/ouro-macemu) checkout next to this folder (`OURO_MACEMU`): Basilisk II (68k Macs) is `BasiliskII/src/Unix/BasiliskII`, SheepShaver (PowerPC Macs) `SheepShaver/src/Unix/SheepShaver` | `build-emulators.sh` (clones it if missing) |
 | `systemless/bin/systemless` | [systemless](https://github.com/benletchford/systemless) 0.109.0 (a reimplemented Toolbox that runs 68k / PPC apps without ROM or System), built with its debugger socket - Homebrew's build has none | `build-emulators.sh` (needs cargo) |
 | `roms/PERFORMA.ROM` | a 68040 Mac ROM for Basilisk II, e.g. Performa 630 (1 MB) | yours |
 | `roms/newworld86.rom` | a New World ROM for SheepShaver | yours |
@@ -52,18 +51,18 @@ the game. A game's own disks and the emulator settings
 From a port's repository root:
 
     # Harry, 68k build in System 7.5
-    ../ouro-tools/basilisk/BasiliskII/src/Unix/BasiliskII --config re/work/emu/basilisk.prefs
+    ../ouro-macemu/BasiliskII/src/Unix/BasiliskII --config re/work/emu/basilisk.prefs
     # Harry, PowerPC build in Mac OS 9
-    ../ouro-tools/sheepshaver/SheepShaver/src/Unix/SheepShaver --config "$PWD/re/work/emu-ppc/sheepshaver.prefs"
+    ../ouro-macemu/SheepShaver/src/Unix/SheepShaver --config "$PWD/re/work/emu-ppc/sheepshaver.prefs"
     # S.C.Out (writes its settings, then starts Basilisk II)
     re/tools/emulator/run.sh
 
 Without a window, driven from a script:
 
     SDL_VIDEODRIVER=offscreen SDL_AUDIODRIVER=dummy EMULATOR_MONITOR_PORT=19840 \
-      ../ouro-tools/basilisk/BasiliskII/src/Unix/BasiliskII --config re/work/emu/basilisk.prefs &
-    python3 ../ouro-tools/basilisk/tools/emumonitor.py shot /tmp/mac.png
-    python3 ../ouro-tools/basilisk/tools/emumonitor.py click 20 10
+      ../ouro-macemu/BasiliskII/src/Unix/BasiliskII --config re/work/emu/basilisk.prefs &
+    python3 ../ouro-macemu/tools/emumonitor.py shot /tmp/mac.png
+    python3 ../ouro-macemu/tools/emumonitor.py click 20 10
 
 Notes that cost time:
 - Basilisk II's default `frameskip 6` shows 10 images per second; the
@@ -114,9 +113,12 @@ the check is due.
 
 ## Working on the emulators
 
-Change `ouro-macemu` in `basilisk/` (branch `ouro`), commit, push; then
-`build-emulators.sh sheepshaver` pulls the same branch into
-`sheepshaver/`. Keep the branch on top of kanjitalk755's `master`
+`../ouro-macemu` is an ordinary working copy (remotes: `origin` the
+fork, `upstream` kanjitalk755): change it on branch `ouro`, commit, push,
+then `build-emulators.sh` builds both emulators from it as it is (no pull,
+no branch switch). The SheepShaver build's `make links` replaces a tracked
+file by a link; the script hides that from `git status`
+(`--assume-unchanged`), so it is not committed by mistake. Keep the branch on top of kanjitalk755's `master`
 (`git rebase`) and its README's list of differences current. The
 Makefiles have no header dependencies: build from clean after changing a
 header (the script always does).
