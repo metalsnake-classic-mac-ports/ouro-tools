@@ -75,6 +75,15 @@ Notes that cost time:
 - The monitor's `quit` ends the emulator without shutting the Mac down:
   the next Mac OS 9 boot shows "did not shut down properly" (click Done).
 
+## Fork check
+
+Once a month the forks of kanjitalk755/macemu are checked for changes
+worth taking into ouro-macemu: `FORK-CHECK.md` holds the date of the last
+check, the procedure and the open candidates; `fork-check.sh changed` lists
+the fork branches that moved since `fork-heads.tsv`. In Claude Code a
+SessionStart hook (`fork-check.sh hook`, in the user settings) reminds when
+the check is due.
+
 ## Working on the emulators
 
 Change `ouro-macemu` in `basilisk/` (branch `ouro`), commit, push; then
