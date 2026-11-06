@@ -1,9 +1,7 @@
 # Apple's ROMs and system software: never in git
 /roms/
 /systems/
-# Emulator checkouts and builds (source: ouro-macemu on GitHub; build-emulators.sh)
-/basilisk/
-/sheepshaver/
+# systemless build (build-emulators.sh); the emulators are built in ../ouro-macemu
 /systemless/
 .DS_Store
 __pycache__/
