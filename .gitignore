@@ -6,3 +6,4 @@
 /sheepshaver/
 /systemless/
 .DS_Store
+__pycache__/
