@@ -73,10 +73,20 @@ Notes that cost time:
 - SheepShaver after a fresh Mac OS 9 install has no sound output
   selected in the Sound control panel: games that open a sound channel
   quit until it is selected.
-- In Basilisk II with `system75-sound*.dsk` the shared folder ("Unix")
-  does not show up on the desktop; put files onto a disk image with
-  hfsutils while the emulator is off (`retro68-build/toolchain/bin/hmount
-  DISK; hcopy -m FILE.bin :Name; humount`; Retro68 builds them).
+- Basilisk II shows the shared folder ("Unix") only with the File System
+  Manager 1.2 or newer (`extfs.cpp` asks Gestalt; otherwise the log says
+  "FSM <1.2 found, disabling ExtFS"). System 7.5.0 has an older one:
+  `system75-sound-harry.dsk` has the "File System Manager" 1.2 extension
+  (from Apple's File System Manager 1.2 SDK, user's download) in its
+  Extensions folder since 2026-11-08 (before: `system75-sound-harry.before-fsm12.dsk`);
+  `system75-sound.dsk` does not yet. Without it: put files onto a disk
+  image with hfsutils while the emulator is off
+  (`retro68-build/toolchain/bin/hmount DISK; hcopy -m FILE.bin :Name`,
+  `hcopy -b` for BinHex; `humount`). hcopy takes MacBinary II only (a
+  MacBinary I header needs the version bytes 129 and the CRC); a host
+  archive unpacked with `unar -forks fork` keeps forks and Finder info.
+- Disk Copy 4.2 does not run on the System 7.5 disk ("will not run on this
+  kind of Macintosh since certain required support is not provided").
 - The monitor's `quit` ends the emulator without shutting the Mac down:
   the next Mac OS 9 boot shows "did not shut down properly" (click Done).
 
