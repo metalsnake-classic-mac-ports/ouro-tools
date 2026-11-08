@@ -5,3 +5,6 @@
 /systemless/
 .DS_Store
 __pycache__/
+# Retro68 (build-retro68.sh): source and build
+/retro68/
+/retro68-build/

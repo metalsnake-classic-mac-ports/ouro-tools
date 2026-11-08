@@ -32,6 +32,7 @@ kanjitalk755/macemu and where it comes from.
 |---|---|---|
 | `../ouro-macemu/` | the [ouro-macemu](https://github.com/metalsnake-classic-mac-ports/ouro-macemu) checkout next to this folder (`OURO_MACEMU`): Basilisk II (68k Macs) is `BasiliskII/src/Unix/BasiliskII`, SheepShaver (PowerPC Macs) `SheepShaver/src/Unix/SheepShaver` | `build-emulators.sh` (clones it if missing) |
 | `systemless/bin/systemless` | [systemless](https://github.com/benletchford/systemless) 0.109.0 (a reimplemented Toolbox that runs 68k / PPC apps without ROM or System), built with its debugger socket - Homebrew's build has none | `build-emulators.sh` (needs cargo) |
+| `retro68-build/toolchain/` | [Retro68](https://github.com/autc04/Retro68) (GCC for classic Macs, 68k only), for small programs the ports run on the Mac itself; source in `retro68/` | `build-retro68.sh` (about an hour; `brew install boost cmake gmp mpfr libmpc bison texinfo ninja`) |
 | `roms/PERFORMA.ROM` | a 68040 Mac ROM for Basilisk II, e.g. Performa 630 (1 MB) | yours |
 | `roms/newworld86.rom` | a New World ROM for SheepShaver | yours |
 | `systems/System70_boot.dsk` | System 7.0 boot floppy | yours |
@@ -72,6 +73,10 @@ Notes that cost time:
 - SheepShaver after a fresh Mac OS 9 install has no sound output
   selected in the Sound control panel: games that open a sound channel
   quit until it is selected.
+- In Basilisk II with `system75-sound*.dsk` the shared folder ("Unix")
+  does not show up on the desktop; put files onto a disk image with
+  hfsutils while the emulator is off (`retro68-build/toolchain/bin/hmount
+  DISK; hcopy -m FILE.bin :Name; humount`; Retro68 builds them).
 - The monitor's `quit` ends the emulator without shutting the Mac down:
   the next Mac OS 9 boot shows "did not shut down properly" (click Done).
 
