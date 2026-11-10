@@ -105,7 +105,8 @@ in a venv, run with `python3 -I`.
 | `xref.py` | callers of a 68k routine across segments |
 | `thinkc_globals.py` | THINK C globals from DATA / ZERO / DREL |
 | `macsbug_syms.py` | 68k routine names from MacsBug symbols (CodeWarrior, MPW) |
-| `pict.py`, `topng.py` | PICT v2 (8-bit) → PNG; raw pixels + `pltt` → PNG |
+| `pict.py`, `topng.py` | PICT v1/v2 (all bitmap opcodes, 1-8 bit, regions) → PNG; raw pixels + `pltt` → PNG |
+| `ppat.py` | colour pixel pattern (`ppat`) → PNG |
 | `machine.py` | 68k code in Unicorn for differential tests: segments, A5 globals, jump table, trap stubs |
 | `ghidra/` | 68k: replace A-line traps, decompile all segments headless |
 | `ppc/pef_traceback.py` | PEF: routine starts and names from traceback tables |
