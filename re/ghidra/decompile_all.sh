@@ -5,7 +5,17 @@
 # A-line traps replaced by TRAP #15, see patch_traps.py). Function starts are
 # seeded from the jump table in CODE 0 (WORK/rsrc/CODE_0.bin).
 # Needs: brew install ghidra (path below), processor 68000:BE:32:MC68020.
+# Java: GHIDRA_JAVA_HOME if set, else the newest Homebrew openjdk@N (a
+# Ghidra update may need a newer JDK than JAVA_HOME points to; headless
+# Ghidra cannot ask for one and quietly decompiles nothing).
 set -e
+if [ -n "$GHIDRA_JAVA_HOME" ]; then
+    JAVA_HOME="$GHIDRA_JAVA_HOME"
+else
+    J=$(ls -d /opt/homebrew/opt/openjdk@* 2>/dev/null | sort -t@ -k2 -n | tail -1)
+    [ -n "$J" ] && JAVA_HOME="$J/libexec/openjdk.jdk/Contents/Home"
+fi
+export JAVA_HOME
 W="$(cd "$1" && pwd)"
 mkdir -p "$W/decomp" "$W/ghidra-proj"
 python3 -I - "$W" <<'PY'
@@ -28,4 +38,5 @@ for f in "$W"/code_patched/seg*.bin; do
         -scriptPath "$(dirname "$0")" \
         -postScript CreateFuncs.java "$W/seeds/$n.txt" \
         -postScript DecompileAll.java "$W/decomp/$n.c" 2>&1 | grep 'created functions' | sed "s/^/$n: /"
+    [ -s "$W/decomp/$n.c" ] || { echo "$n: Ghidra wrote no output (Java? run analyzeHeadless by hand)" >&2; exit 1; }
 done
