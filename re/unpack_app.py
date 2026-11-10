@@ -11,6 +11,7 @@ CODE 0 (the jump table) stays as rsrc/CODE_0.bin.
 
 The input is the application as
   - MacBinary (e.g. from `hcopy -m` out of a disk image),
+  - AppleDouble / AppleSingle (e.g. `unar -k visible` writes NAME.rsrc),
   - a file holding only the resource fork (raw), or
   - on macOS a file with a resource fork (read via FILE/..namedfork/rsrc).
 
@@ -37,6 +38,13 @@ def read_fork(path):
         start = 128 + ((data_len + 127) // 128) * 128
         if 0 < rsrc_len and start + rsrc_len <= len(data):
             return data[start:start + rsrc_len], "MacBinary"
+    # AppleDouble (0x00051607) / AppleSingle (0x00051600): entry 2 = rsrc
+    if len(data) >= 26 and data[:4] in (b"\x00\x05\x16\x07", b"\x00\x05\x16\x00"):
+        (count,) = struct.unpack(">H", data[24:26])
+        for i in range(count):
+            eid, off, length = struct.unpack(">III", data[26 + 12 * i:38 + 12 * i])
+            if eid == 2:
+                return data[off:off + length], "AppleDouble"
     try:
         fork = open(os.path.join(path, "..namedfork", "rsrc"), "rb").read()
         if fork:

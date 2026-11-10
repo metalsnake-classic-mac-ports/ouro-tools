@@ -127,6 +127,12 @@ TRAPS = {
     0xAA97: "PmForeColor", 0xAA98: "PmBackColor", 0xAA99: "AnimateEntry",
     0xAA9A: "AnimatePalette", 0xAA9B: "GetEntryColor", 0xAA9C: "SetEntryColor",
     0xAAA2: "PaletteDispatch", 0xAB1D: "QDExtensions",
+    0xA03B: "Delay", 0xA046: "GetTrapAddress",
+    0xA346: "GetOSTrapAddress", 0xA746: "GetToolBoxTrapAddress",
+    0xA006: "KillIO", 0xA008: "Create", 0xA009: "Delete",
+    0xA00D: "SetFileInfo", 0xA02D: "SetApplLimit", 0xA090: "SysEnvirons",
+    0xA817: "CopyMask", 0xA88F: "OSDispatch", 0xA8FD: "PrGlue",
+    0xA911: "CheckUpdate", 0xA9A4: "HomeResFile",
 }
 
 
