@@ -55,6 +55,7 @@ SEG_SIZE = 0x10000
 STACK = 0x700000
 RETURN = 0x0F0000
 STUB = 0x0F1000  # RTS
+FLAGS = 0x0F4000  # per condition code value: MOVE #ccr, CCR; RTS (set_ccr)
 LOW_MEMORY = 0x1000  # Mac low memory globals live below this
 
 
@@ -66,6 +67,9 @@ class Machine:
         uc.mem_map(0, LOW_MEMORY)
         uc.mem_map(RETURN, 0x2000)
         uc.mem_write(STUB, b"\x4e\x75")
+        uc.mem_map(FLAGS, 0x1000)
+        for ccr in range(32):
+            uc.mem_write(FLAGS + 8 * ccr, struct.pack(">HHH", 0x44FC, ccr, 0x4E75))
         uc.mem_map(STACK - 0x20000, 0x20000)
         uc.mem_map(A5 - 0x40000, 0x50000)
         self.segments = {}
@@ -131,6 +135,20 @@ class Machine:
         assert word[0] & 0xF0 == 0xA0, f"no A-line trap at {addr:#x}: {word.hex()}"
         self.uc.mem_write(addr, b"\x4e\x71")
         self.uc.hook_add(UC_HOOK_CODE, lambda uc, a, s, _: handler(self), begin=addr, end=addr)
+
+    def set_ccr(self, ccr):
+        """From a stub_trap handler: the condition codes (X N Z V C, bits
+        4-0) the code after the trap sees. Writing SR from a hook does not
+        do it: Unicorn's m68k keeps the flags apart from SR (QEMU's lazy
+        flags), so a Bcc after the hook would test the old ones - SANE
+        comparisons then never branch. Instead the hook goes through MOVE
+        #ccr, CCR; RTS, with the address after the trap pushed for the RTS.
+        Call it last in the handler, after any stack changes."""
+        pc = self.uc.reg_read(UC_M68K_REG_PC)
+        sp = self.uc.reg_read(UC_M68K_REG_A7) - 4
+        self.uc.mem_write(sp, struct.pack(">I", pc + 2))
+        self.uc.reg_write(UC_M68K_REG_A7, sp)
+        self.uc.reg_write(UC_M68K_REG_PC, FLAGS + 8 * (ccr & 0x1F))
 
     def stub_random(self, sites=None):
         """Toolbox Random (A861) as on a real Mac: Park-Miller with the seed
