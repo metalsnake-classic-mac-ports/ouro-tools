@@ -12,7 +12,11 @@ What it sets up, from the work layout of unpack_app.py:
 
 What it does not do: the Toolbox. A-line traps raise, with the address,
 so you see which ones a routine needs; replace them with `stub_trap`
-(e.g. Random) or stop the routine before it gets there. Jump table
+(e.g. Random) or stop the routine before it gets there. A stub that
+gives condition codes (a comparison, a Boolean tested by flags) sets them
+with `set_ccr`, never by writing SR: Unicorn loses such a write after a
+flag-setting instruction in the same block, so the guard refuses SR
+writes and the constructor checks that `set_ccr` works. Jump table
 entries that draw, play sound or read the keyboard can be stubbed out
 (`stub_entries`) or replaced by Python (`hook_entry`).
 
@@ -43,7 +47,9 @@ from unicorn.m68k_const import (
     UC_M68K_REG_A5,
     UC_M68K_REG_A7,
     UC_M68K_REG_D0,
+    UC_M68K_REG_D1,
     UC_M68K_REG_PC,
+    UC_M68K_REG_SR,
 )
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -57,12 +63,34 @@ RETURN = 0x0F0000
 STUB = 0x0F1000  # RTS
 FLAGS = 0x0F4000  # per condition code value: MOVE #ccr, CCR; RTS (set_ccr)
 LOW_MEMORY = 0x1000  # Mac low memory globals live below this
+CCR_PROBE = FLAGS + 0x800  # set_ccr's start-up check
+
+
+def guard_sr(uc):
+    """Refuse SR writes on this Unicorn: its m68k keeps the condition codes
+    apart from SR (QEMU's lazy flags), so after a flag-setting instruction
+    in the same translated block an SR written from a hook never reaches
+    the next Bcc - silently: a stubbed comparison never branches (Quagmire's
+    rounding read as truncation). Use Machine.set_ccr; for a deliberate SR
+    write (supervisor or interrupt bits) uc.raw_sr_write. (Uc() returns an
+    arch subclass, so the guard goes on the instance.)"""
+    write = uc.reg_write
+
+    def reg_write(reg_id, value):
+        if reg_id == UC_M68K_REG_SR:
+            raise RuntimeError("SR written through Unicorn: the condition codes may not reach the "
+                               "next Bcc - use Machine.set_ccr (or uc.raw_sr_write)")
+        return write(reg_id, value)
+
+    uc.reg_write = reg_write
+    uc.raw_sr_write = lambda value: write(UC_M68K_REG_SR, value)
+    return uc
 
 
 class Machine:
     def __init__(self, work, stub_entries=(), cpu=UC_CPU_M68K_M68020):
         self.work = work
-        uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, cpu)
+        uc = guard_sr(Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, cpu))
         self.uc = uc
         uc.mem_map(0, LOW_MEMORY)
         uc.mem_map(RETURN, 0x2000)
@@ -83,6 +111,30 @@ class Machine:
         self._globals()
         uc.hook_add(UC_HOOK_INTR, self._on_exception)
         self.seed = 1
+        self._check_set_ccr()
+
+    def _check_set_ccr(self):
+        """Make sure set_ccr works with this Unicorn: a hook at a NOP after
+        a flag-setting instruction in the same block sets C, a BCS after
+        it must branch (and must not with C clear). Raises otherwise, so a
+        Unicorn update cannot quietly bring back the lost flags."""
+        # moveq #0,d1 (C clear) / moveq #-1,d1 / nop (hook) / bcs.s +4 /
+        # moveq #0,d0 / bra.s +2 / moveq #1,d0
+        uc = self.uc
+        for first, ccr, want in ((0x7200, 0x01, 1), (0x72FF, 0x00, 0), (0x72FF, 0x09, 1)):
+            uc.mem_write(CCR_PROBE, struct.pack(">7H", first, 0x4E71, 0x6504, 0x7000, 0x6002, 0x7001, 0x4E75))
+            uc.reg_write(UC_M68K_REG_D0, 9)
+            uc.reg_write(UC_M68K_REG_D1, 5)
+            uc.reg_write(UC_M68K_REG_A7, STACK - 0x80)
+            h = uc.hook_add(UC_HOOK_CODE, lambda _uc, a, s, _: self.set_ccr(ccr), begin=CCR_PROBE + 2, end=CCR_PROBE + 2)
+            try:
+                uc.emu_start(CCR_PROBE, CCR_PROBE + 12, count=20)
+            finally:
+                uc.hook_del(h)
+            got = uc.reg_read(UC_M68K_REG_D0)
+            if got != want:
+                raise RuntimeError(f"set_ccr does not work with this Unicorn (ccr {ccr:#x}: "
+                                   f"BCS gave {got}, wanted {want}) - stubbed comparisons would be wrong")
 
     def address(self, segment, offset):
         return SEG_BASE + segment * SEG_SIZE + offset
