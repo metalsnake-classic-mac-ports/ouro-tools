@@ -39,6 +39,7 @@ kanjitalk755/macemu and where it comes from.
 | `systems/System70_boot.dsk` | System 7.0 boot floppy | yours |
 | `systems/system75-sound.dsk` | System 7.5 "Disk Tools" System Folder + Sound Manager 3.1, 20 MB (Basilisk II plays sound only through Sound Manager 3.x) | `make-sound-disk.sh MacOS75.ZIP Sound_Manager_3.1.sea_.hqx` (both were free Apple downloads; `brew install unar hfsutils`) |
 | `systems/system711.dsk`, `system711.hd`, `scsi-driver-722.bin` | System 7.1.1 (System 7 Pro, Easy Install, PowerTalk removed) on an 80 MB volume: bare for Basilisk II, as a bootable SCSI disk for MAME (Quadra 700, IIci, SE/30 tested), and HD SC Setup 7.2.2's driver for `re/mkscsidisk.py` | `make-system711-disk.sh SSW-7-Pro-Disk-Images.sit` (the 12 floppy images; installs in MAME, about 3 minutes) |
+| `systems/system755.dsk`, `system755.hd` | System 7.5.5 (7.5.3 Easy Install for the Quadra 700 + the 7.5.5 Update) on a 160 MB volume with MacsBug 6.5.3, File System Manager 1.2, `Utilities:` Disk Copy 6.3.3 and StuffIt Expander 4.0.2: bare for Basilisk II (shared folder works), as a SCSI disk for MAME | `make-system755-disk.sh SYSTEM_7-5-3-RETAIL.ISO Apple-Legacy-Feb_2000.iso MacsBug_6.5.3.sit stuffit_expander_4.0.2.sea_.bin` (installs in MAME, about 6 minutes; needs `scsi-driver-722.bin` and the FSM from `system75-sound-harry.dsk`) |
 | `systems/macos904.iso` | a Mac OS 9.0.4 install CD | yours |
 | `systems/macos9-clean.dsk` | Mac OS 9.0.4 freshly installed on a 2 GB Mac OS Extended image ("Update Apple Hard Disk Drivers" off) | installed in SheepShaver |
 
@@ -148,7 +149,14 @@ Notes that cost time:
 - For the older Macs (IIci, SE/30, LC, ...: less memory, no 7.5)
   `systems/system711.hd` is ready made (`make-system711-disk.sh`). It also
   shows how to drive an installer: `drive.lua`'s `feed` changes the
-  floppies.
+  floppies. `systems/system755.hd` (`make-system755-disk.sh`) is the
+  full 7.5.5 with MacsBug; its script shows an install from CD and an
+  update from a folder per disk (the Installer takes a folder named like
+  a disk for the disk), and `click` for buttons without a key.
+- Apple's Legacy Recovery CD (2000) has every system from 1.0 to 8.1,
+  the updates and Disk Tools per model, as NDIF images (`re/ndif.py`);
+  System 6.0.8 from it boots the Mac Plus and Classic. MPW's `ROM Maps`
+  (MPW 3.5) name the ROM routines of 24 models, Quadra 700 included.
 - Quadra 700 (`macqd700`) with System 7.5 on the disk above works;
   `-ramsize` takes only the listed sizes (`mame -listxml macqd700 | grep
   ramoption`; 4M default, 8M works; 20M hung in the ROM at start-up).
@@ -185,6 +193,7 @@ in a venv, run with `python3 -I`.
 | `pict.py`, `topng.py` | PICT v1/v2 (all bitmap opcodes, 1-8 bit, regions) → PNG; raw pixels + `pltt` → PNG |
 | `ppat.py` | colour pixel pattern (`ppat`) → PNG |
 | `ndif.py` | Disk Copy 6 image (NDIF, `rohd`/`hdro`, ADC compressed: the Legacy Recovery CD, Apple's downloads) → raw disk image; hdiutil no longer reads NDIF. hfsutils mounts only images of 800K or more: pad smaller ones |
+| `tomacbinary.py` | a macOS file with resource fork and Finder info (`unar -forks fork`) → MacBinary II for `hcopy -m` |
 | `mkscsidisk.py` | a bare HFS volume (a Basilisk II disk) → a bootable SCSI disk for MAME: driver descriptor, partition map, driver, Apple_HFS |
 | `mame/drive.lua` | MAME: timed keys, screenshots, globals dumps, registers and call chain (`run-mame.sh`, `MAME_DRIVE`) |
 | `machine.py` | 68k code in Unicorn for differential tests: segments, A5 globals, jump table, trap stubs; condition codes from stubs only through `set_ccr` (SR writes are refused: Unicorn loses them, checked at start-up) |

@@ -2,16 +2,15 @@
 
 Open work only; remove items when done.
 
-- **Complete System 7.0 and 7.5 test environments for Basilisk II.**
-  `system75-sound*.dsk` is the 7.5 "Disk Tools" System Folder (a minimal
-  one) and `system70.dsk` / `System70_boot.dsk` are not set up as test
-  systems. Wanted: a full install of each (7.5 as 7.5.3 / 7.5.5 if
-  available), Sound Manager 3.1, File System Manager 1.2 (for the shared
-  folder), and the tools to unpack, pack and mount: StuffIt Expander /
-  Deluxe, Disk Copy (4.2 refuses the current 7.5 disk: find out which
-  support it misses, or use DiskDup+ / ShrinkWrap), BinHex. Make them
-  reproducible like `make-sound-disk.sh`, with clean copies, and list
-  them in the README.
+- **Test systems: what is left.** `system755.dsk` / `system711.dsk` are
+  full installs with MacsBug, StuffIt Expander and Disk Copy (7.5.5) and
+  boot in Basilisk II and MAME. Open: whether 7.5.5 plays sound in
+  Basilisk II (it has Sound Manager 3.x built in; not listened to yet) -
+  then `system75-sound*.dsk` can go and the ports' run scripts move to
+  `system755.dsk`; the games installed on it per port (`system755-<game>`);
+  MacsBug on the 7.1.1 disk (6.2.2); BinHex. MacsBug cannot be entered by
+  key in MAME (Cmd+Power does nothing) - it still catches crashes and
+  `_Debugger`.
 
 - **Check the harnesses against the emulator, not only the ports against
   the harnesses.** A harness that emulates the Toolbox or SANE wrongly
