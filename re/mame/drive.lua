@@ -12,6 +12,13 @@
 --             (the application's globals), read through the MMU
 --   regs      print PC, SR, A5-A7, the stack, CurrentA5, CurApName, the A6
 --             frame chain (return addresses) and the bytes around PC
+--   insert MEDIA,FILE / eject MEDIA   change a disk (MEDIA: flop, flop2,
+--             cdrm, hard1, ... as `mame -listmedia` names them; no spaces
+--             in FILE)
+--   feed MEDIA,FILE1|FILE2|...   from now on, whenever the drive is empty
+--             (the Mac ejected the disk), insert the next file, round robin
+--             and press Return 6 s later (an installer's "wrong disk" alert:
+--             Continue ejects it; during copying Return does nothing)
 --   exit      quit MAME
 -- Times run on the emulated clock, so a run with -nothrottle does the same.
 local aliases = {
@@ -44,8 +51,27 @@ end
 table.sort(actions, function(a, b) return a.t < b.t end)
 
 local held, release_at, i = nil, nil, 1
+local feeder
 sub = emu.add_machine_frame_notifier(function()
   local now = manager.machine.time:as_double()
+  if feeder and not feeder.img.exists then
+    if feeder.wait == 0 then
+      feeder.wait = now + 2 -- give the Mac time to notice the empty drive
+    elseif now >= feeder.wait then
+      local f = feeder.files[feeder.next]
+      feeder.next = feeder.next % #feeder.files + 1
+      feeder.img:load(f)
+      feeder.wait = 0
+      feeder.press_at = now + 6 -- Return answers a "wrong disk" alert
+      print(string.format("feed t=%.2f %s", now, f))
+    end
+  end
+  if feeder and feeder.press_at and now >= feeder.press_at and not held then
+    feeder.press_at = nil
+    held = { field("return") }
+    held[1]:set_value(1)
+    release_at = now + 0.15
+  end
   if held and now >= release_at then
     for _, f in ipairs(held) do f:clear_value() end
     held = nil
@@ -95,6 +121,30 @@ sub = emu.add_machine_frame_notifier(function()
       s = s .. string.format("\n  code@%08x:", pc - 16)
       for k = 0, 47 do s = s .. string.format("%02x", space:readv_u8(pc - 16 + k)) end
       print(s)
+    elseif a.verb == "insert" or a.verb == "eject" then
+      -- insert MEDIA,FILE / eject MEDIA: MEDIA is the brief name (flop,
+      -- flop1, flop2, cdrm, hard1, ...) as in `mame -listmedia`
+      local media, file = a.arg:match("^([^,]+),?(.*)$")
+      local img
+      for _, d in pairs(manager.machine.images) do
+        if d.brief_instance_name == media or d.instance_name == media then img = d end
+      end
+      if not img then error("no media " .. media) end
+      if a.verb == "eject" then img:unload() else img:load(file) end
+      print(string.format("%s t=%.2f %s %s", a.verb, now, media, file))
+    elseif a.verb == "feed" then
+      -- feed MEDIA,FILE1|FILE2|...: whenever the drive is empty (the Mac
+      -- ejected the disk), insert the next file, round robin; an
+      -- installer ejects a wrong disk and asks again
+      local media, list = a.arg:match("^([^,]+),(.+)$")
+      local files = {}
+      for f in list:gmatch("[^|]+") do table.insert(files, f) end
+      for _, d in pairs(manager.machine.images) do
+        if d.brief_instance_name == media or d.instance_name == media then
+          feeder = { img = d, files = files, next = 1, wait = 0 }
+        end
+      end
+      if not feeder then error("no media " .. media) end
     elseif a.verb == "exit" then
       manager.machine:exit()
     end

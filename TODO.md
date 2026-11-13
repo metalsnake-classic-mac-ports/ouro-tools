@@ -53,6 +53,7 @@ Open work only; remove items when done.
 - **MAME: open points.** Quadra 700 with 20M RAM hangs in the ROM at
   start-up (4M / 8M work; 36M / 68M untried). The PRAM byte for 8-bit
   video is known for the Quadra 700 only (other machines: change it once
-  in the Monitors control panel and compare the nvram files). A System 6
-  / 7.0.1 disk for the early Macs is missing (the images the MAME wiki
-  links on rbelmont.mameworld.info are gone, NXDOMAIN 2026-11-13).
+  in the Monitors control panel and compare the nvram files). System 7.1.1
+  is there (`make-system711-disk.sh`); a System 6 disk for the compact
+  Macs is missing (the images the MAME wiki links on
+  rbelmont.mameworld.info are gone, NXDOMAIN 2026-11-13).

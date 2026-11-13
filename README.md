@@ -38,6 +38,7 @@ kanjitalk755/macemu and where it comes from.
 | `roms/mame/` | MAME's ROM sets (zip per machine and per device, e.g. `macqd700.zip`, `cuda.zip`), from a MAME 0.289 set | yours |
 | `systems/System70_boot.dsk` | System 7.0 boot floppy | yours |
 | `systems/system75-sound.dsk` | System 7.5 "Disk Tools" System Folder + Sound Manager 3.1, 20 MB (Basilisk II plays sound only through Sound Manager 3.x) | `make-sound-disk.sh MacOS75.ZIP Sound_Manager_3.1.sea_.hqx` (both were free Apple downloads; `brew install unar hfsutils`) |
+| `systems/system711.dsk`, `system711.hd`, `scsi-driver-722.bin` | System 7.1.1 (System 7 Pro, Easy Install, PowerTalk removed) on an 80 MB volume: bare for Basilisk II, as a bootable SCSI disk for MAME (Quadra 700, IIci, SE/30 tested), and HD SC Setup 7.2.2's driver for `re/mkscsidisk.py` | `make-system711-disk.sh SSW-7-Pro-Disk-Images.sit` (the 12 floppy images; installs in MAME, about 3 minutes) |
 | `systems/macos904.iso` | a Mac OS 9.0.4 install CD | yours |
 | `systems/macos9-clean.dsk` | Mac OS 9.0.4 freshly installed on a 2 GB Mac OS Extended image ("Update Apple Hard Disk Drivers" off) | installed in SheepShaver |
 
@@ -144,6 +145,10 @@ level 1 and its map (`A5-0x6546`) dumped:
       ./run-mame.sh macqd700 WORK -ramsize 8M -hard1 WORK/boot.hd
 
 Notes that cost time:
+- For the older Macs (IIci, SE/30, LC, ...: less memory, no 7.5)
+  `systems/system711.hd` is ready made (`make-system711-disk.sh`). It also
+  shows how to drive an installer: `drive.lua`'s `feed` changes the
+  floppies.
 - Quadra 700 (`macqd700`) with System 7.5 on the disk above works;
   `-ramsize` takes only the listed sizes (`mame -listxml macqd700 | grep
   ramoption`; 4M default, 8M works; 20M hung in the ROM at start-up).
