@@ -184,6 +184,7 @@ in a venv, run with `python3 -I`.
 | `macsbug_syms.py` | 68k routine names from MacsBug symbols (CodeWarrior, MPW) |
 | `pict.py`, `topng.py` | PICT v1/v2 (all bitmap opcodes, 1-8 bit, regions) → PNG; raw pixels + `pltt` → PNG |
 | `ppat.py` | colour pixel pattern (`ppat`) → PNG |
+| `ndif.py` | Disk Copy 6 image (NDIF, `rohd`/`hdro`, ADC compressed: the Legacy Recovery CD, Apple's downloads) → raw disk image; hdiutil no longer reads NDIF. hfsutils mounts only images of 800K or more: pad smaller ones |
 | `mkscsidisk.py` | a bare HFS volume (a Basilisk II disk) → a bootable SCSI disk for MAME: driver descriptor, partition map, driver, Apple_HFS |
 | `mame/drive.lua` | MAME: timed keys, screenshots, globals dumps, registers and call chain (`run-mame.sh`, `MAME_DRIVE`) |
 | `machine.py` | 68k code in Unicorn for differential tests: segments, A5 globals, jump table, trap stubs; condition codes from stubs only through `set_ccr` (SR writes are refused: Unicorn loses them, checked at start-up) |
