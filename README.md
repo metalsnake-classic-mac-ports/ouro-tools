@@ -189,6 +189,7 @@ in a venv, run with `python3 -I`.
 | `disasm.py` | 68k disassembly with Toolbox trap names and jump table targets |
 | `xref.py` | callers of a 68k routine across segments |
 | `routine_map.py` | two applications of the same code (a game and its sequel, two versions): which routine of A is which of B - the same, constants only, changed, or one's only - and their globals paired (Quagmire → Sammy the Cyclebot) |
+| `lockstep.py` | run a routine of two such applications instruction by instruction on the same random data (paired by access, so other table addresses and record sizes are covered) and report where they part: the evidence that a port can share it |
 | `thinkc_globals.py` | THINK C globals from DATA / ZERO / DREL |
 | `macsbug_syms.py` | 68k routine names from MacsBug symbols (CodeWarrior, MPW) |
 | `pict.py`, `topng.py` | PICT v1/v2 (all bitmap opcodes, 1-8 bit, regions) → PNG; raw pixels + `pltt` → PNG |
