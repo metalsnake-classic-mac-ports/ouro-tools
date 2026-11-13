@@ -4,12 +4,13 @@
 #   folder (OURO_MACEMU, default ../ouro-macemu; cloned with branch ouro if
 #   missing): BasiliskII/src/Unix/BasiliskII, SheepShaver/src/Unix/SheepShaver
 #   (Unix build, SDL2 via sdl2-compat, no JIT);
-#   systemless 0.109.0 with its debugger socket into systemless/ here.
+#   systemless 0.109.0 with its debugger socket into systemless/ here;
+#   MAME from Homebrew (bottled; run it with run-mame.sh).
 #
 # An existing checkout is built as it is (no pull, no branch switch), so
 # work in progress there is never touched.
 #
-# Usage: build-emulators.sh [basilisk|sheepshaver|systemless|all]   (default: all)
+# Usage: build-emulators.sh [basilisk|sheepshaver|systemless|mame|all]   (default: all)
 # Needs: brew install autoconf automake libtool mpfr gmp sdl2-compat
 #        (systemless: a Rust toolchain with cargo)
 set -e
@@ -59,4 +60,9 @@ if [ "$WHAT" = systemless ] || [ "$WHAT" = all ]; then
     # Homebrew's systemless has no debugger socket (Harry's re/tools/sl_peek.py needs it).
     cargo install systemless --version 0.109.0 --locked --features debug-server --root "$TOOLS/systemless"
     echo "built $TOOLS/systemless/bin/systemless"
+fi
+if [ "$WHAT" = mame ] || [ "$WHAT" = all ]; then
+    # Hardware-level emulation with a debugger and Lua (README, "MAME").
+    command -v mame >/dev/null || brew install mame
+    echo "mame $(mame -version)"
 fi
