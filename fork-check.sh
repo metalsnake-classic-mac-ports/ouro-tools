@@ -12,6 +12,11 @@
 # Watched: every fork of kanjitalk755/macemu, the PocketShaver family (carbjo and
 # its forks) and ouro-macemu's sources. Needs gh (logged in) and git.
 set -e
+# Where the script was started and its own path, taken before the cd below changes $PWD
+# and makes a relative $0 useless. The hook falls back to the first when Claude Code
+# doesn't set CLAUDE_PROJECT_DIR.
+started_in=$PWD
+self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 cd "$(dirname "$0")"
 HEADS=fork-heads.tsv
 
@@ -56,11 +61,11 @@ due)
 hook)
     # Claude Code SessionStart hook: in a session under the ports folder (the
     # parent of this one), add a reminder to the context when the check is due.
-    case "${CLAUDE_PROJECT_DIR:-$PWD}/" in
+    case "${CLAUDE_PROJECT_DIR:-$started_in}/" in
     "$(cd .. && pwd)"/*) ;;
     *) exit 0 ;;
     esac
-    msg=$("$0" due)
+    msg=$("$self" due)
     [ -n "$msg" ] || exit 0
     printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"The monthly macemu fork check is %s. Tell the user and offer to run it now; how: %s/FORK-CHECK.md."}}\n' \
         "$msg" "$(pwd)"
