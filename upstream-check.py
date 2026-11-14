@@ -73,6 +73,10 @@ PROJECTS = {
         "paths": ["hw/m68k", "target/m68k", "hw/nubus", "hw/misc/mac_via.c", "hw/ppc/mac_oldworld.c",
                   "hw/ppc/mac_newworld.c"],
     },
+    "minivmac/minivmac": {
+        "group": "emulator",
+        "why": "compact Macs and Mac II, fast; a candidate for System 6 games (not used here yet)",
+    },
     "benletchford/systemless": {
         "group": "emulator",
         "why": "Toolbox reimplementation running 68k / PPC apps; headless play scripts (built here)",

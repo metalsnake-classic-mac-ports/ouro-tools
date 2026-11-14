@@ -99,4 +99,5 @@ fi
 humount
 cp "$TMP/out.dsk" "$SYSTEMS/system711.dsk"
 python3 -I "$TOOLS/re/mkscsidisk.py" "$SYSTEMS/system711.dsk" "$SYSTEMS/scsi-driver-722.bin" "$SYSTEMS/system711.hd"
+"$TOOLS/fsck-hfs.sh" "$SYSTEMS/system711.dsk"
 echo "wrote $SYSTEMS/system711.dsk, system711.hd, scsi-driver-722.bin"

@@ -4,9 +4,11 @@
 # System 7.5.5 Update from the Apple Legacy Recovery CD; then add with
 # hfsutils MacsBug 6.5.3, the File System Manager 1.2 (Basilisk II's shared
 # folder needs it), Disk Copy 6.3.3, StuffIt Expander 4.0.2 and optionally
-# Debugger!. Writes into
-# systems/ next to this script (or OUT_DIR):
-#   system755.dsk   the bare 160 MB HFS volume (Basilisk II)
+# Debugger!. Writes into systems/ next to this script (or OUT_DIR):
+#   system755.dsk   the bare 120 MB HFS volume (Basilisk II); 120, not 128
+#                   or 160: fsck_hfs wants allocation blocks of at least
+#                   (all sectors / 65535) and hformat may pick one size less
+#                   (fsck-hfs.sh)
 #   system755.hd    the same as a bootable SCSI disk (MAME: -hard1)
 #
 # Usage: make-system755-disk.sh SYSTEM_7-5-3-RETAIL.ISO Apple-Legacy-Feb_2000.iso \
@@ -46,7 +48,7 @@ volume() { dd if="$1" of="$2" bs=512 skip=128 2>/dev/null; }  # HFS out of a dis
 # Installers•", "•Install System Software•": the bullet sorts first);
 # Return = Continue, Return = Install. "Installation was successful" at
 # about t=640.
-dd if=/dev/zero of="$TMP/vol.dsk" bs=1m count=160 2>/dev/null
+dd if=/dev/zero of="$TMP/vol.dsk" bs=1m count=120 2>/dev/null
 hformat -l "Macintosh HD" "$TMP/vol.dsk" >/dev/null
 humount
 python3 -I "$RE/mkscsidisk.py" "$TMP/vol.dsk" "$DRIVER" "$TMP/a.hd" >/dev/null
@@ -118,4 +120,5 @@ hcopy -m "$TMP/x/expander.bin" ':Utilities:StuffIt Expander'
 humount
 cp "$TMP/out.dsk" "$SYSTEMS/system755.dsk"
 python3 -I "$RE/mkscsidisk.py" "$SYSTEMS/system755.dsk" "$DRIVER" "$SYSTEMS/system755.hd"
+"$TOOLS/fsck-hfs.sh" "$SYSTEMS/system755.dsk"
 echo "wrote $SYSTEMS/system755.dsk, system755.hd"
