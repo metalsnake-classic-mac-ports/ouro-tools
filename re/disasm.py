@@ -7,11 +7,19 @@ Usage: python3 disasm.py <work dir> <segment> <start hex> <end hex>
 (needs capstone; the work layout of unpack_app.py: <work>/code/segNN.bin,
 <work>/rsrc/CODE_0.bin)
 """
+import os
 import re
 import struct
 import sys
 
 import capstone
+
+# run with python3 -I: this folder is not on the path then
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from trapnames import MPW_TRAPS  # written by imref.py trapnames
+except ImportError:
+    MPW_TRAPS = {}
 
 # Toolbox and OS traps (Inside Macintosh). Auto-pop and flag bits (0x0400,
 # 0x0200, 0x0100 in OS traps) are ignored where they do not change the name.
@@ -110,6 +118,10 @@ TRAPS = {
     0xA9DB: "TEPaste", 0xA9DC: "TEKey", 0xA9E7: "Pack0", 0xA9E8: "Pack1", 0xA9E9: "Pack2",
     0xA9EA: "Pack3 (Standard File)", 0xA9EB: "Pack4 (SANE)", 0xA9EC: "Pack5",
     0xA9ED: "Pack6", 0xA9EE: "Pack7 (NumToString/StringToNum)",
+    # dispatchers (the selector is a pushed word or d0) and one MPW's
+    # headers misname (imref's trapnames leaves them out)
+    0xA823: "AliasDispatch (Alias / Folder Manager)", 0xA82E: "Pack12 (Color Picker)",
+    0xA869: "FixRatio",
     0xA9EF: "PtrAndHand", 0xA9F0: "LoadSeg", 0xA9F1: "UnloadSeg",
     0xA9F4: "ExitToShell", 0xA9F5: "GetAppParms", 0xA9FF: "Debugger",
     0xAA00: "OpenCPort", 0xAA01: "InitCPort", 0xAA02: "CloseCPort",
@@ -137,16 +149,18 @@ TRAPS = {
 
 
 def trap_name(word):
-    if word in TRAPS:
-        return TRAPS[word]
-    if word & 0x0800 == 0:  # OS trap: flag bits 8–10
-        base = word & 0xF8FF
-        if base in TRAPS:
-            return TRAPS[base]
-    else:
-        base = word & 0xFBFF  # Toolbox: auto-pop bit 10
-        if base in TRAPS:
-            return TRAPS[base] + " (auto-pop)"
+    # our own table first, then the names imref.py took from MPW's headers
+    for table in (TRAPS, MPW_TRAPS):
+        if word in table:
+            return table[word]
+        if word & 0x0800 == 0:  # OS trap: flag bits 8–10
+            base = word & 0xF8FF
+            if base in table:
+                return table[base]
+        else:
+            base = word & 0xFBFF  # Toolbox: auto-pop bit 10
+            if base in table:
+                return table[base] + " (auto-pop)"
     return f"trap {word:#06x}"
 
 

@@ -14,6 +14,9 @@ or a full-text search.
   imref.py search WORDS...     full-text search: book, page, snippet
   imref.py error CODE|NAME     a result code: -43 -> fnfErr, or the reverse
   imref.py page BOOK LABEL     one printed page, e.g. `page Tb 3-120`
+  imref.py trapnames           write re/trapnames.py: every trap word that
+                               MPW declares for one routine only, by name
+                               (disasm.py's fallback; only names, no text)
 
 Sources, all Apple's and out of git (reference/ is ignored):
   reference/im-pdf/Inside Macintosh/   the 1992-96 PDFs with X-Ref/
@@ -342,6 +345,27 @@ def error(value):
         print("not in X-Ref's result codes")
 
 
+def trapnames():
+    """The trap words with exactly one routine (no selector dispatchers
+    like Pack8 or _A823), as a Python dict for disasm.py."""
+    rows = connect().execute(
+        "select trap, min(name) from traps where selector is null group by trap "
+        "having count(distinct name) = 1 order by trap").fetchall()
+    # the header parser leaves a few non-names behind (macros, lower case words)
+    rows = [(trap, name) for trap, name in rows if re.fullmatch(r"[A-Z][A-Za-z0-9_]+", name)
+            and name != "EXTERN_API"]
+    out = os.path.join(HERE, "trapnames.py")
+    with open(out, "w") as f:
+        f.write('"""Trap words and their routines from MPW\'s C interfaces (Universal\n'
+                'Interfaces 3.4), written by `imref.py trapnames`: the traps MPW declares\n'
+                'for one routine only. disasm.py uses them where its own table has no name."""\n\n'
+                "MPW_TRAPS = {\n")
+        for trap, name in rows:
+            f.write(f'    0x{trap}: "{name}",\n')
+        f.write("}\n")
+    print(f"{len(rows)} traps into {out}")
+
+
 def page(book, label):
     text, _ = page_text(connect(), book, label)
     print(text if text else "no such page")
@@ -357,6 +381,8 @@ if __name__ == "__main__":
         search(args)
     elif command == "error" and args:
         error(args[0])
+    elif command == "trapnames":
+        trapnames()
     elif command == "page" and len(args) == 2:
         page(*args)
     else:

@@ -236,7 +236,7 @@ in a venv, run with `python3 -I`.
 |---|---|
 | `unpack_app.py` | application (MacBinary / resource fork / raw) → a work layout: `code/segNN.bin`, `rsrc/` |
 | `macres.py` | list / dump the resources of a MacBinary file |
-| `disasm.py` | 68k disassembly with Toolbox trap names and jump table targets |
+| `disasm.py`, `trapnames.py` | 68k disassembly with Toolbox trap names and jump table targets |
 | `xref.py` | callers of a 68k routine across segments |
 | `routine_map.py` | two applications of the same code (a game and its sequel, two versions): which routine of A is which of B - the same, constants only, changed, or one's only - and their globals paired (Quagmire → Sammy the Cyclebot) |
 | `lockstep.py` | run a routine of two such applications instruction by instruction on the same random data (paired by access, so other table addresses and record sizes are covered) and report where they part: the evidence that a port can share it |
@@ -247,7 +247,7 @@ in a venv, run with `python3 -I`.
 | `ppat.py` | colour pixel pattern (`ppat`) → PNG |
 | `ndif.py` | Disk Copy 6 image (NDIF, `rohd`/`hdro`, ADC compressed: the Legacy Recovery CD, Apple's downloads) → raw disk image; hdiutil no longer reads NDIF. hfsutils mounts only images of 800K or more: pad smaller ones |
 | `tomacbinary.py` | a macOS file with resource fork and Finder info (`unar -forks fork`) → MacBinary II for `hcopy -m` |
-| `imref.py` | Inside Macintosh offline - the 1992-96 books with X-Ref, the 1985 volumes I-III (`IM85`, OCR), the trap words of MPW's C interfaces: `lookup NAME` (routine, constant, field: trap, book, page and the text there), `lookup A976` / `_A9ED` (the routines on a trap, with selectors), `search WORDS`, `error -43`, `page Tb 3-120`; `build` once from `reference/` (Apple's, git-ignored: `im-pdf/`, `im-1985/`, `mpw/`; `brew install poppler`). The Inside Macintosh CD (August 1994, DocViewer format) holds the same books - the PDFs were printed from it - and adds nothing |
+| `imref.py` | Inside Macintosh offline - the 1992-96 books with X-Ref, the 1985 volumes I-III (`IM85`, OCR), the trap words of MPW's C interfaces: `lookup NAME` (routine, constant, field: trap, book, page and the text there), `lookup A976` / `_A9ED` (the routines on a trap, with selectors), `search WORDS`, `error -43`, `page Tb 3-120`; `build` once from `reference/` (Apple's, git-ignored: `im-pdf/`, `im-1985/`, `mpw/`; `brew install poppler`). The Inside Macintosh CD (August 1994, DocViewer format) holds the same books - the PDFs were printed from it - and adds nothing; `trapnames` writes `trapnames.py` (every trap MPW declares for one routine, names only, in git), which `disasm.py` uses where its own table has none |
 | `mkscsidisk.py` | a bare HFS volume (a Basilisk II disk) → a bootable SCSI disk for MAME: driver descriptor, partition map, driver, Apple_HFS |
 | `mame/drive.lua` | MAME: timed keys, screenshots, globals dumps, registers and call chain (`run-mame.sh`, `MAME_DRIVE`) |
 | `machine.py` | 68k code in Unicorn for differential tests: segments, A5 globals, jump table, trap stubs; condition codes from stubs only through `set_ccr` (SR writes are refused: Unicorn loses them, checked at start-up) |
