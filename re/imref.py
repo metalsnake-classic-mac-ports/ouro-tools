@@ -1,18 +1,25 @@
-"""Look things up in Inside Macintosh (the 1992-96 series and its X-Ref
-volume) without the internet: a routine's description, a constant, a
-record field, a result code, or a full-text search.
+"""Look things up in Inside Macintosh without the internet: the 1992-96
+series with its X-Ref volume, the 1985 volumes I-III (book IM85), and the
+A-line trap words from MPW's C interfaces (Universal Interfaces 3.4): a
+routine's description, a trap, a constant, a record field, a result code,
+or a full-text search.
 
   imref.py build [PDF_DIR]     read the books into reference/imref.sqlite
                                (once; PDF_DIR holds the books and X-Ref/,
                                default reference/im-pdf/Inside Macintosh)
-  imref.py lookup NAME         where NAME is documented (routine, constant,
-                               field; X-Ref index) and the text there
+  imref.py lookup NAME|TRAP    where NAME is documented (routine, constant,
+                               field; X-Ref index, IM85 headings), its trap
+                               word, and the text there; TRAP (A976, _A976,
+                               0xA976) lists the routines on that trap
   imref.py search WORDS...     full-text search: book, page, snippet
   imref.py error CODE|NAME     a result code: -43 -> fnfErr, or the reverse
   imref.py page BOOK LABEL     one printed page, e.g. `page Tb 3-120`
 
-The books are Apple's and stay out of git (reference/ is ignored); `build`
-needs pdftotext (brew install poppler). Run with python3 -I.
+Sources, all Apple's and out of git (reference/ is ignored):
+  reference/im-pdf/Inside Macintosh/   the 1992-96 PDFs with X-Ref/
+  reference/im-1985/Inside Macintosh Volume I, II, III - 1985.pdf  (OCR text)
+  reference/mpw/.../Interfaces/CIncludes/*.h   (MPW, CR line endings)
+`build` needs pdftotext (brew install poppler). Run with python3 -I.
 """
 import os
 import re
@@ -24,6 +31,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REFERENCE = os.path.join(os.path.dirname(HERE), "reference")
 DB = os.path.join(REFERENCE, "imref.sqlite")
 DEFAULT_PDFS = os.path.join(REFERENCE, "im-pdf", "Inside Macintosh")
+IM85_PDF = os.path.join(REFERENCE, "im-1985", "Inside Macintosh Volume I, II, III - 1985.pdf")
+MPW_DIR = os.path.join(REFERENCE, "mpw")
+IM85_TITLE = "Inside Macintosh I-III (1985)"
 
 # The X-Ref volume's abbreviations and the PDF file of each book.
 BOOKS = {
@@ -125,6 +135,68 @@ def parse_result_codes(pages):
     return codes
 
 
+def im85_label(text):
+    """The 1985 volume's page label ("I-110", "II-332", "III-197") from its
+    OCR text, where I and 1 (and l) are mixed up in the volume and O and I
+    in the number."""
+    lines = [l for l in text.splitlines() if l.strip()]
+    for line in lines[:2] + lines[-2:]:
+        found = re.search(r"(?:^|\s)([I1l]{1,3})-([0-9IlO]{1,3})(?:\s|$)", line)
+        if found:
+            volume = "I" * len(found.group(1))
+            number = found.group(2).translate(str.maketrans("IlO", "110"))
+            return f"{volume}-{int(number)}"
+    return None
+
+
+def im85_headings(text):
+    """Routine names from the 1985 volume's PROCEDURE / FUNCTION headings."""
+    return re.findall(r"^\s*(?:PROCEDURE|FUNCTION)\s+([A-Za-z][A-Za-z0-9]+)", text, re.M)
+
+
+INLINE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*?\)\s*"
+                    r"(?:ONE|TWO|THREE|FOUR|FIVE|SIX)WORDINLINE\(([^)]*)\)")
+
+
+def selector(words):
+    """The selector that the instruction right before the trap puts into D0 or
+    onto the stack: moveq #n,d0 (0x70nn), move.w #n,d0 (0x303C n),
+    move.l #n,d0 (0x203C hi lo), move.w #n,-(sp) (0x3F3C n, the Pack
+    traps), clr.w -(sp) (0x4267, selector 0)."""
+    if len(words) >= 3 and words[-3] == 0x203C:
+        return words[-2] << 16 | words[-1]
+    if len(words) >= 2 and words[-2] in (0x303C, 0x3F3C):
+        return words[-1]
+    if words and words[-1] == 0x4267:
+        return 0
+    if words and words[-1] >> 8 == 0x70:
+        value = words[-1] & 0xFF
+        return value - 0x100 if value & 0x80 else value
+    return None
+
+
+def mpw_traps(mpw_dir):
+    """(name, trap word, selector, header, inline words) for every routine
+    an MPW C interface declares with an A-line trap in its inline code."""
+    found = []
+    for root, _, files in os.walk(mpw_dir):
+        if os.path.basename(root) != "CIncludes":
+            continue
+        for file in sorted(files):
+            if not file.endswith(".h"):
+                continue
+            text = open(os.path.join(root, file), "rb").read().decode("mac_roman").replace("\r", "\n")
+            for name, inline in INLINE.findall(text):
+                words = [int(w, 16) for w in re.findall(r"0x([0-9A-Fa-f]{1,4})", inline)]
+                traps = [i for i, w in enumerate(words) if w & 0xF000 == 0xA000]
+                if not traps:
+                    continue
+                i = traps[-1]
+                found.append((name, f"{words[i]:04X}", selector(words[:i]), file,
+                              " ".join(f"{w:04X}" for w in words)))
+    return found
+
+
 def build(pdf_dir):
     if os.path.exists(DB):
         os.remove(DB)
@@ -135,6 +207,9 @@ def build(pdf_dir):
         create virtual table fts using fts5(book unindexed, label unindexed, text);
         create table entries(kind text, name text, book text, label text);
         create table codes(name text, code integer, meaning text);
+        create table traps(name text, trap text, selector integer, header text, inline text);
+        create index traps_name on traps(name collate nocase);
+        create index traps_trap on traps(trap);
         create index entries_name on entries(name collate nocase);
     """)
     for abbr, (title, file) in list(BOOKS.items()) + [(k, (k, f)) for k, f in EXTRA.items()]:
@@ -154,7 +229,28 @@ def build(pdf_dir):
     codes = parse_result_codes(pdf_pages(os.path.join(pdf_dir, "X-Ref/Result Codes.pdf")))
     db.executemany("insert into codes values (?, ?, ?)", codes)
     print(f"{len(codes)} result codes")
+    if os.path.exists(IM85_PDF):
+        headings = 0
+        for number, text in enumerate(pdf_pages(IM85_PDF), 1):
+            label = im85_label(text)
+            db.execute("insert into pages values ('IM85', ?, ?, ?)", (number, label, text))
+            db.execute("insert into fts values ('IM85', ?, ?)", (label or f"pdf {number}", text))
+            # summaries repeat every heading: index the chapters' own pages
+            if label and "Summary of" not in text[:400]:
+                for name in im85_headings(text):
+                    db.execute("insert into entries values ('routine', ?, 'IM85', ?)", (name, label))
+                    headings += 1
+        print(f"IM85 {IM85_TITLE}: {headings} routine headings")
+    else:
+        print(f"missing: {IM85_PDF}")
+    traps = mpw_traps(MPW_DIR)
+    db.executemany("insert into traps values (?, ?, ?, ?, ?)", traps)
+    print(f"{len(traps)} trap declarations from MPW's C interfaces")
     db.commit()
+
+
+def title(book):
+    return IM85_TITLE if book == "IM85" else BOOKS.get(book, (book,))[0]
 
 
 def connect():
@@ -170,16 +266,44 @@ def page_text(db, book, label):
 
 def lookup(name):
     db = connect()
+    trap = re.fullmatch(r"(?:_|0x)?([Aa][0-9A-Fa-f]{3})", name.strip())
+    if trap:
+        word = int(trap.group(1), 16)
+        rows = db.execute("select name, selector, header, inline from traps where trap = ? "
+                          "order by selector, name", (f"{word:04X}",)).fetchall()
+        if not rows and word < 0xA800:
+            # OS traps: bits 9 and 10 are flags (SYS, CLEAR / IMMED, ASYNC);
+            # the headers may declare only one variant
+            base = word & 0xF9FF
+            rows = db.execute("select name, selector, header, inline from traps where "
+                              "trap in (?, ?, ?, ?) order by trap, name",
+                              tuple(f"{base | flags:04X}" for flags in (0, 0x200, 0x400, 0x600))).fetchall()
+            if rows:
+                print(f"_{word:04X} not declared; the same OS trap with other flag bits:")
+        for routine, sel, header, inline in rows:
+            print(f"_{trap.group(1).upper()}" + (f" selector {sel}" if sel is not None else "")
+                  + f": {routine}  ({header}: {inline})")
+        if not rows:
+            print("no routine on this trap in MPW's C interfaces")
+        if len({r[0] for r in rows}) == 1:
+            print()
+            name = rows[0][0]
+        else:
+            return
+    for routine, trap_word, sel, header, inline in db.execute(
+            "select name, trap, selector, header, inline from traps where name = ? collate nocase", (name,)):
+        print(f"trap _{trap_word}" + (f" selector {sel}" if sel is not None else "")
+              + f": {routine}  ({header}: {inline})")
     rows = db.execute("select kind, name, book, label from entries where name = ? collate nocase "
-                      "order by kind, book, label", (name,)).fetchall()
+                      "order by kind, book = 'IM85', book, label", (name,)).fetchall()
     for code in db.execute("select name, code, meaning from codes where name = ? collate nocase", (name,)):
         print(f"result code {code[0]} = {code[1]}: {code[2]}")
     if not rows:
-        print(f"{name}: not in the X-Ref indexes; full-text search:")
+        print(f"{name}: not in the indexes; full-text search:")
         search([name])
         return
     for kind, entry, book, label in rows:
-        print(f"{kind} {entry}: {BOOKS[book][0]} ({book}) page {label}")
+        print(f"{kind} {entry}: {title(book)} ({book}) page {label}")
     # the description: the first reference's page from the line naming it on
     kind, entry, book, label = rows[0]
     text, pdf_page = page_text(db, book, label)
@@ -189,7 +313,7 @@ def lookup(name):
     start = next((i for i, l in enumerate(lines) if re.search(rf"\b{re.escape(entry)}\b", l)), 0)
     following, _ = db.execute("select text, 0 from pages where book = ? and pdf_page = ?",
                               (book, pdf_page + 1)).fetchone() or ("", 0)
-    print(f"\n--- {BOOKS[book][0]}, page {label} ---")
+    print(f"\n--- {title(book)}, page {label} ---")
     print("\n".join(lines[start:] + following.splitlines()[:40]).rstrip())
 
 
@@ -199,8 +323,7 @@ def search(words, limit=12):
     rows = db.execute("select book, label, snippet(fts, 2, '[', ']', ' ... ', 12) from fts "
                       "where fts match ? order by rank limit ?", (query, limit)).fetchall()
     for book, label, snippet in rows:
-        title = BOOKS.get(book, (book,))[0]
-        print(f"{book:4} {label:7} {title}: {' '.join(snippet.split())}")
+        print(f"{book:4} {label:7} {title(book)}: {' '.join(snippet.split())}")
     if not rows:
         print("nothing found")
 
