@@ -38,15 +38,19 @@ the source named), add it to ouro-macemu's README list, rebuild with
 
 ## Decided
 
-- 2026-11-14, taken onto `ouro` by cherry-pick `-x` (not pushed yet):
+- 2026-11-14, taken onto `ouro` by cherry-pick `-x` (pushed 2026-11-14):
   upstream `e2989b65` (fatal Mach exceptions without GUI teardown) and
   `40bbf669` (`stfiwx`), until `ouro` is next rebased onto `master`; e-z-g
   `4584883c` (`singlemode`, off by default), here also declared as a
   Basilisk II pref. Built and booted headless (SheepShaver / Mac OS 9.0.4,
-  Basilisk II / System 7.5) with and without `singlemode`. Not observed:
-  that it shortens the Mac's mode list - under `SDL_VIDEODRIVER=offscreen`
-  `screen` is clamped to the dummy display's 1024x768, and with 1000x700
-  both settings came up at 1000x700.
+  Basilisk II / System 7.5) with and without `singlemode`. Headless runs
+  cannot show its effect (`SDL_VIDEODRIVER=offscreen` clamps `screen` to the
+  dummy display's 1024x768). Tested by hand in a window, Basilisk II /
+  System 7.5, `screen win/1200/800`: without `singlemode`, Monitors >
+  Options... lists the standard sizes and a size chosen there (800x600)
+  lasts through a restart of the Mac, but the next emulator start comes up
+  at 1200x800 again; with `singlemode true` it comes up at 1200x800 and
+  1200x800 is the only size offered.
 - 2026-11-14, not taken: RandoOnSteam `48319f9f` (stops zeroing r28, the
   68k VBR, in `execute_68k`; no reason given beyond a force-quit crash) -
   only if that crash shows up here.
