@@ -192,6 +192,7 @@ in a venv, run with `python3 -I`.
 | `lockstep.py` | run a routine of two such applications instruction by instruction on the same random data (paired by access, so other table addresses and record sizes are covered) and report where they part: the evidence that a port can share it |
 | `thinkc_globals.py` | THINK C globals from DATA / ZERO / DREL |
 | `macsbug_syms.py` | 68k routine names from MacsBug symbols (CodeWarrior, MPW) |
+| `cut_sprites.py` | cut sprites out of a sheet as transparent PNGs at their own size (the 1-bit mask as alpha), several side by side: pictures for documentation such as a page on The Cutting Room Floor |
 | `pict.py`, `topng.py` | PICT v1/v2 (all bitmap opcodes, 1-8 bit, regions) → PNG; raw pixels + `pltt` → PNG |
 | `ppat.py` | colour pixel pattern (`ppat`) → PNG |
 | `ndif.py` | Disk Copy 6 image (NDIF, `rohd`/`hdro`, ADC compressed: the Legacy Recovery CD, Apple's downloads) → raw disk image; hdiutil no longer reads NDIF. hfsutils mounts only images of 800K or more: pad smaller ones |
