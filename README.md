@@ -175,6 +175,38 @@ Notes that cost time:
 - `drive.lua` reads memory through the MMU (`readv_*`); CurrentA5 is the
   running application's A5, the A5 register may belong to the system.
 
+## DingusPPC
+
+[DingusPPC](https://github.com/dingusdev/dingusppc) (GPL-3, alpha 1.04c,
+active) emulates PowerPC Macs at the hardware level with their real
+Old World ROMs, as MAME does for the 68k Macs. Not built here yet; tried
+2026-11-14, kept for when it is needed:
+- **What it adds**: a debugger with a **68k context** (`context 68k`:
+  the registers and code of 68k programs running in a PowerPC Mac's 68k
+  emulator - no other emulator here shows that), a **deterministic
+  mode** (`--deterministic`: every run the same, the clock from a fixed
+  date; `--deterministic-mode interactive` takes input), and hardware
+  accuracy for PPC games that behave oddly in SheepShaver.
+- **What it lacks**: screenshots, runs without a window (offscreen SDL
+  aborts: "SDL_CreateWindow failed"), save states, a scripting
+  interface; it is an interpreter only (no JIT).
+- **ROMs** (4 MB Old World): the Power Mac 7200/7500/8500/9500 ROM
+  (`96cd923d`, the user's `mac_oldworld_rom4mb.rom`: `-m pm7500`), and
+  MAME's sets carry the 6100 (`pmac6100.zip`, `9feb69b3.rom`) and the
+  Beige G3 (`pwrmacg3.zip`) - the three machines it calls most complete.
+- **Build**: `git clone https://github.com/dingusdev/dingusppc`,
+  `git submodule update --init --recursive`, then `cmake
+  -DCMAKE_BUILD_TYPE=Release -DDPPC_68K_DEBUGGER=ON ..` and `make` in a
+  `build` folder; the binary is `bin/dingusppc.app/Contents/MacOS/dingusppc`.
+- **Run**: `dingusppc -m pm7500 -b ROM --rambank1_size 64 --cdr_img
+  CD.iso -r` (the 7.5.3 CD boots; `--hdd_img` takes a disk with a
+  partition map and driver, `re/mkscsidisk.py`). `list machines`, `-m M
+  list properties` show the options.
+- **Debugger from a script**: start it with stdin from a FIFO, `kill
+  -INT` drops into the debugger, then write commands into the FIFO:
+  `regs`, `context 68k`, `regs`, `disas 6,pc`, `dump 32c,0x910`
+  (numbers as in C: `0x` hex, a leading `0` octal, otherwise decimal), `go`, `quit`.
+
 ## Analysis library (`re/`)
 
 General tools for reverse engineering a classic Mac game; a port's
@@ -218,6 +250,17 @@ check, the procedure and the open candidates; `fork-check.sh changed` lists
 the fork branches that moved since `fork-heads.tsv`. In Claude Code a
 SessionStart hook (`fork-check.sh hook`, in the user settings) reminds when
 the check is due.
+
+## Upstream check
+
+MAME and DingusPPC are not forked; once a month their new releases and
+commits are checked (MAME only on the paths of the Mac drivers, the 68k
+and PowerPC CPUs, the Mac chips, its debugger and Lua):
+`UPSTREAM-CHECK.md` holds the date of the last check, the procedure and
+the open candidates; `python3 -I upstream-check.py changed` lists what is
+new since `upstream-state.json` (also new revisions of the MAME wiki's Mac
+pages and a newer MAME in Homebrew). A SessionStart hook
+(`upstream-check.py hook`, in the user settings) reminds when it is due.
 
 ## Working on the emulators
 

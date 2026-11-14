@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-14T18:36:18Z",
+  "heads": {
+    "mamedev/mame": "0d77f5a517a690a7f3e576bebc251cc1461e4fbf",
+    "dingusdev/dingusppc": "d0fb711842f6e9851394ea036b049668b3119d52"
+  },
+  "wiki": {
+    "Driver:Mac 68K": {
+      "revid": 9663,
+      "date": "2026-07-21"
+    },
+    "Driver:Mac PPC": {
+      "revid": 9695,
+      "date": "2026-09-21"
+    }
+  }
+}
