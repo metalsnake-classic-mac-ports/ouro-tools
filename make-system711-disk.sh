@@ -12,6 +12,9 @@
 # Usage: make-system711-disk.sh SSW-7-Pro-Disk-Images.sit [OUT_DIR]
 # (the 12 Disk Copy 4.2 floppy images of System 7 Pro)
 # Needs: brew install unar hfsutils; MAME and roms/mame (README, "MAME").
+# Optional tools, each from its archive: MACSBUG_SIT=MacsBug_6.2.2_0.sit
+# (into the System Folder), DEBUGGER_SIT=Debugger.sit and
+# STUFFIT=stuffit_expander_4.0.2.sea_.bin (into a folder Utilities).
 # Takes about 3 minutes (15 emulated minutes at 6x).
 set -e
 SIT="$1"
@@ -68,6 +71,13 @@ MAME_DRIVE="121 key return; 135 key tab; 141 key return; 142 feed flop,${LIST#|}
     "$TOOLS/run-mame.sh" macqd700 "$TMP/mame" -ramsize 8M -hard1 "$TMP/inst.hd" \
     -flop "$TMP/fd/Install.dsk" >"$TMP/mame.log" 2>&1 || { cat "$TMP/mame.log"; exit 1; }
 
+# the optional tools
+. "$TOOLS/disk-extras.sh"
+: > "$TMP/macsbug.list"
+[ -n "$MACSBUG_SIT" ] && extra_macsbug "$MACSBUG_SIT" "$TMP/x" > "$TMP/macsbug.list"
+[ -n "$DEBUGGER_SIT" ] && extra_debugger "$DEBUGGER_SIT" "$TMP/x" >/dev/null
+[ -n "$STUFFIT" ] && extra_expander "$STUFFIT" "$TMP/x" >/dev/null
+
 # the volume back out of the disk (HFS at block 128), PowerTalk removed
 dd if="$TMP/inst.hd" of="$TMP/out.dsk" bs=512 skip=128 2>/dev/null
 hmount "$TMP/out.dsk" >/dev/null
@@ -79,6 +89,13 @@ done
 hdel ":System Folder:Control Panels:PowerTalk Setup" 2>/dev/null || true
 hls ':PowerTalk Folder' 2>/dev/null | while read -r f; do hdel ":PowerTalk Folder:$f"; done
 hrmdir ':PowerTalk Folder' 2>/dev/null || true
+hdel ':Shutdown Check' 2>/dev/null || true  # MAME was not shut down
+while read -r f; do hcopy -m "$f" ':System Folder:'; done < "$TMP/macsbug.list"
+if [ -f "$TMP/x/debugger.bin" ] || [ -f "$TMP/x/expander.bin" ]; then
+    hmkdir ':Utilities'
+    [ -f "$TMP/x/debugger.bin" ] && hcopy -m "$TMP/x/debugger.bin" ':Utilities:Debugger!'
+    [ -f "$TMP/x/expander.bin" ] && hcopy -m "$TMP/x/expander.bin" ':Utilities:StuffIt Expander'
+fi
 humount
 cp "$TMP/out.dsk" "$SYSTEMS/system711.dsk"
 python3 -I "$TOOLS/re/mkscsidisk.py" "$SYSTEMS/system711.dsk" "$SYSTEMS/scsi-driver-722.bin" "$SYSTEMS/system711.hd"

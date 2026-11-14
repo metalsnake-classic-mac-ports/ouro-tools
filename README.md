@@ -38,8 +38,8 @@ kanjitalk755/macemu and where it comes from.
 | `roms/mame/` | MAME's ROM sets (zip per machine and per device, e.g. `macqd700.zip`, `cuda.zip`), from a MAME 0.289 set | yours |
 | `systems/System70_boot.dsk` | System 7.0 boot floppy | yours |
 | `systems/system75-sound.dsk` | System 7.5 "Disk Tools" System Folder + Sound Manager 3.1, 20 MB (Basilisk II plays sound only through Sound Manager 3.x) | `make-sound-disk.sh MacOS75.ZIP Sound_Manager_3.1.sea_.hqx` (both were free Apple downloads; `brew install unar hfsutils`) |
-| `systems/system711.dsk`, `system711.hd`, `scsi-driver-722.bin` | System 7.1.1 (System 7 Pro, Easy Install, PowerTalk removed) on an 80 MB volume: bare for Basilisk II, as a bootable SCSI disk for MAME (Quadra 700, IIci, SE/30 tested), and HD SC Setup 7.2.2's driver for `re/mkscsidisk.py` | `make-system711-disk.sh SSW-7-Pro-Disk-Images.sit` (the 12 floppy images; installs in MAME, about 3 minutes) |
-| `systems/system755.dsk`, `system755.hd` | System 7.5.5 (7.5.3 Easy Install for the Quadra 700 + the 7.5.5 Update) on a 160 MB volume with MacsBug 6.5.3, File System Manager 1.2, `Utilities:` Disk Copy 6.3.3 and StuffIt Expander 4.0.2: bare for Basilisk II (shared folder works), as a SCSI disk for MAME | `make-system755-disk.sh SYSTEM_7-5-3-RETAIL.ISO Apple-Legacy-Feb_2000.iso MacsBug_6.5.3.sit stuffit_expander_4.0.2.sea_.bin` (installs in MAME, about 6 minutes; needs `scsi-driver-722.bin` and the FSM from `system75-sound-harry.dsk`) |
+| `systems/system711.dsk`, `system711.hd`, `scsi-driver-722.bin` | System 7.1.1 (System 7 Pro, Easy Install, PowerTalk removed; with `MACSBUG_SIT`, `DEBUGGER_SIT`, `STUFFIT` also MacsBug 6.2.2, `Utilities:` Debugger! and StuffIt Expander 4.0.2) on an 80 MB volume: bare for Basilisk II, as a bootable SCSI disk for MAME (Quadra 700, IIci, SE/30 tested), and HD SC Setup 7.2.2's driver for `re/mkscsidisk.py` | `make-system711-disk.sh SSW-7-Pro-Disk-Images.sit` (the 12 floppy images; installs in MAME, about 3 minutes) |
+| `systems/system755.dsk`, `system755.hd` | System 7.5.5 (7.5.3 Easy Install for the Quadra 700 + the 7.5.5 Update) on a 160 MB volume with MacsBug 6.5.3, File System Manager 1.2, `Utilities:` Disk Copy 6.3.3, StuffIt Expander 4.0.2 and (`DEBUGGER_SIT=Debugger.sit`) Debugger!: bare for Basilisk II (shared folder works), as a SCSI disk for MAME | `make-system755-disk.sh SYSTEM_7-5-3-RETAIL.ISO Apple-Legacy-Feb_2000.iso MacsBug_6.5.3.sit stuffit_expander_4.0.2.sea_.bin` (installs in MAME, about 6 minutes; needs `scsi-driver-722.bin` and the FSM from `system75-sound-harry.dsk`) |
 | `systems/macos904.iso` | a Mac OS 9.0.4 install CD | yours |
 | `systems/macos9-clean.dsk` | Mac OS 9.0.4 freshly installed on a 2 GB Mac OS Extended image ("Update Apple Hard Disk Drivers" off) | installed in SheepShaver |
 
@@ -153,6 +153,17 @@ Notes that cost time:
   full 7.5.5 with MacsBug; its script shows an install from CD and an
   update from a folder per disk (the Installer takes a folder named like
   a disk for the disk), and `click` for buttons without a key.
+- MacsBug cannot be entered by key in MAME (Cmd+Power does nothing):
+  open `Utilities:Debugger!` on the test disks (siddhartha77's; it calls
+  `DebugStr`), MacsBug comes up with "We are in!"; `g` + Return goes
+  back.
+- Default RAM is the model's smallest (IIci: 2M): System 7.1.1 with
+  MacsBug then stops at boot with "System error #25" (out of memory) in
+  MacsBug. Give `-ramsize 8M`.
+- Typing in the Finder selects in the front window: `system755` starts
+  with the disk's window open (`u`, Cmd+O, `d`, Cmd+O opens Debugger!),
+  `system711` with none (`m`, Cmd+O first). Boot needs about 60-80 s of
+  emulated time; keys sent earlier land elsewhere.
 - Apple's Legacy Recovery CD (2000) has every system from 1.0 to 8.1,
   the updates and Disk Tools per model, as NDIF images (`re/ndif.py`);
   System 6.0.8 from it boots the Mac Plus and Classic. MPW's `ROM Maps`

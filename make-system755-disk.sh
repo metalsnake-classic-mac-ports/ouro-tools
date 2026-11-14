@@ -3,7 +3,8 @@
 # (Quadra 700): System 7.5.3 from the retail CD (Easy Install), then the
 # System 7.5.5 Update from the Apple Legacy Recovery CD; then add with
 # hfsutils MacsBug 6.5.3, the File System Manager 1.2 (Basilisk II's shared
-# folder needs it), Disk Copy 6.3.3 and StuffIt Expander 4.0.2. Writes into
+# folder needs it), Disk Copy 6.3.3, StuffIt Expander 4.0.2 and optionally
+# Debugger!. Writes into
 # systems/ next to this script (or OUT_DIR):
 #   system755.dsk   the bare 160 MB HFS volume (Basilisk II)
 #   system755.hd    the same as a bootable SCSI disk (MAME: -hard1)
@@ -14,7 +15,8 @@
 # systems/scsi-driver-722.bin (make-system711-disk.sh; the driver of the
 # 7.5.3 CD's HD SC Setup does not mount this disk); the File System Manager
 # from systems/system75-sound-harry.dsk (FSM_DISK: another disk with
-# ':System Folder:Extensions:File System Manager').
+# ':System Folder:Extensions:File System Manager'). DEBUGGER_SIT=Debugger.sit
+# adds siddhartha77's Debugger! (MacsBug on demand) to Utilities.
 # Takes about 6 minutes (30 emulated minutes at 6x).
 set -e
 CD753="$1"; LEGACY="$2"; MACSBUG="$3"; STUFFIT="$4"
@@ -31,6 +33,7 @@ FSM_DISK="${FSM_DISK:-$TOOLS/systems/system75-sound-harry.dsk}"
 TMP="$(mktemp -d)"
 trap 'humount >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
 RE="$TOOLS/re"
+. "$TOOLS/disk-extras.sh"
 mame_run() {  # mame_run DRIVE HD [options]: headless Quadra 700
     drive="$1"; hd="$2"; shift 2
     MAME_HEADLESS=1 MAME_DRIVE="$drive" "$TOOLS/run-mame.sh" macqd700 "$TMP/mame" \
@@ -85,18 +88,9 @@ mame_run "80 key m; 81 key cmd+o; 91 key u; 92 key cmd+o; 100 key s; 101 key cmd
 volume "$TMP/b.hd" "$TMP/out.dsk"
 
 # 3. Clean up and add the tools
-mkdir "$TMP/mb" "$TMP/se"
-unar -q -forks fork -o "$TMP/mb" "$MACSBUG" >/dev/null
-python3 -I "$RE/tomacbinary.py" "$TMP/mb/MacsBug 6.5.3/Put into System folder/MacsBug" "$TMP/macsbug.bin"
-unar -q -forks fork -o "$TMP/se" "$STUFFIT" >/dev/null
-img="$(find "$TMP/se" -name '*.img' | head -1)"
-python3 -I "$RE/ndif.py" "$img" "$img/..namedfork/rsrc" "$TMP/se.dsk" >/dev/null
-python3 -I -c "import sys; f=open(sys.argv[1],'r+b'); f.truncate(max(819200, f.seek(0,2)))" "$TMP/se.dsk"
-hmount "$TMP/se.dsk" >/dev/null
-d="$(hls | head -1)"
-app="$(hls ":$d" | grep -v '^Read Us' | head -1)"
-hcopy -m ":$d:$app" "$TMP/expander.bin"
-humount
+extra_macsbug "$MACSBUG" "$TMP/x" > "$TMP/macsbug.list"
+extra_expander "$STUFFIT" "$TMP/x" >/dev/null
+[ -n "$DEBUGGER_SIT" ] && extra_debugger "$DEBUGGER_SIT" "$TMP/x" >/dev/null
 hmount "$FSM_DISK" >/dev/null
 hcopy -m ':System Folder:Extensions:File System Manager' "$TMP/fsm.bin"
 humount
@@ -111,11 +105,16 @@ for i in 1 2 3; do
 done
 hrmdir ':Update 755'
 hdel ':Shutdown Check' 2>/dev/null || true  # MAME was not shut down
-hcopy -m "$TMP/macsbug.bin" ':System Folder:MacsBug'
+# the installers' leftovers (the second holds the files 7.5.5 replaced)
+hls ':System Folder' | grep 'Installer Temp' | while IFS= read -r f; do
+    hfs_rm_tree ":System Folder:$f"
+done
+while read -r f; do hcopy -m "$f" ':System Folder:'; done < "$TMP/macsbug.list"
 hcopy -m "$TMP/fsm.bin" ':System Folder:Extensions:File System Manager'
 hmkdir ':Utilities'
 hcopy -m "$TMP/diskcopy.bin" ':Utilities:Disk Copy'
-hcopy -m "$TMP/expander.bin" ':Utilities:StuffIt Expander'
+hcopy -m "$TMP/x/expander.bin" ':Utilities:StuffIt Expander'
+[ -f "$TMP/x/debugger.bin" ] && hcopy -m "$TMP/x/debugger.bin" ':Utilities:Debugger!'
 humount
 cp "$TMP/out.dsk" "$SYSTEMS/system755.dsk"
 python3 -I "$RE/mkscsidisk.py" "$SYSTEMS/system755.dsk" "$DRIVER" "$SYSTEMS/system755.hd"

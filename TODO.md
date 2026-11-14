@@ -8,10 +8,7 @@ Open work only; remove items when done.
   Basilisk II (it has Sound Manager 3.x built in; not listened to yet) -
   then `system75-sound*.dsk` can go and the ports' run scripts move to
   `system755.dsk`; the games installed on it per port (`system755-<game>`);
-  MacsBug on the 7.1.1 disk (6.2.2); BinHex. MacsBug cannot be entered by
-  key in MAME (Cmd+Power does nothing) - it still catches crashes and
-  `_Debugger`; siddhartha77's Debugger! app (skill, related-projects)
-  drops into it on demand: put it on the test disks.
+  BinHex.
 
 - **Check the harnesses against the emulator, not only the ports against
   the harnesses.** A harness that emulates the Toolbox or SANE wrongly
