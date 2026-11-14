@@ -1,8 +1,24 @@
 {
-  "date": "2026-11-14T18:36:18Z",
+  "date": "2026-11-14T19:42:07Z",
   "heads": {
-    "mamedev/mame": "0d77f5a517a690a7f3e576bebc251cc1461e4fbf",
-    "dingusdev/dingusppc": "d0fb711842f6e9851394ea036b049668b3119d52"
+    "mamedev/mame": "7cf19f1da70c3cd3fc361e03a3c68246295995af",
+    "dingusdev/dingusppc": "d0fb711842f6e9851394ea036b049668b3119d52",
+    "twvd/snow": "38a6397baff5612c52f0be158f76cb196d08ebac",
+    "qemu/qemu": "e9fa1f66f0d47c74b6766e1b8b87ad7c2a9394d5",
+    "benletchford/systemless": "be8f6d79100a96f833cf07bac94359aff183f266",
+    "theeggcrusher2/Classetta-weekly": "2ff5883a94de9628bfc009acab0a8a6248594a2b",
+    "unicorn-engine/unicorn": "7c5db94191defc1e04a4f66f4eb1220903cba837",
+    "capstone-engine/capstone": "823242a51299ce5a8bac79c0914278419fe4f7a6",
+    "NationalSecurityAgency/ghidra": "42db038f3c88c6bd7e9bedbb919138111f8b77fd",
+    "autc04/Retro68": "a4a389c41e90b1095a40ccf13f28678b6cfbba86",
+    "MacPaw/XADMaster": "7cb9ee0abbb163f261e4cb74501e15067032319c",
+    "adespoton/macextract.py": "b60d9b24c0acbe941615b11bf7dfa2cb2ea9cfa5",
+    "uzTools/MacExtract": "983a4c7643356ca1aa33eb123ccd8e6dbef90a00",
+    "danifunker/rusty-backup": "6df35cdcbea9cfb4de88fd4b1c54c6bc86f5d627",
+    "elliotnunn/machfs": "4f554286e6f5276a5b4d6d76f64fcecce31f1c26",
+    "LoetLuemmel/AppleBridge": "ea0d617e3012905f6ee07bce2a8d523992a21326",
+    "jorio/Pomme": "8e2a367e01e7aac34a82978718ed16e96c305329",
+    "adespoton/utmconfigs": "482f48bebe943abbf8180c39b048267044375371"
   },
   "wiki": {
     "Driver:Mac 68K": {

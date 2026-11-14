@@ -264,14 +264,16 @@ the check is due.
 
 ## Upstream check
 
-MAME and DingusPPC are not forked; once a month their new releases and
-commits are checked (MAME only on the paths of the Mac drivers, the 68k
-and PowerPC CPUs, the Mac chips, its debugger and Lua):
-`UPSTREAM-CHECK.md` holds the date of the last check, the procedure and
-the open candidates; `python3 -I upstream-check.py changed` lists what is
-new since `upstream-state.json` (also new revisions of the MAME wiki's Mac
-pages and a newer MAME in Homebrew). A SessionStart hook
-(`upstream-check.py hook`, in the user settings) reminds when it is due.
+The emulators and tools we use or keep an eye on but do not fork (MAME,
+DingusPPC, Snow, QEMU, systemless, Classetta, Unicorn, Capstone, Ghidra,
+Retro68, unar, the archive and disk tools, AppleBridge, ...) are checked
+once a month for new releases and commits (big repositories only on the
+paths that matter here): `UPSTREAM-CHECK.md` holds the date of the last
+check, the procedure and the open candidates; `PROJECTS` in
+`upstream-check.py` is the list, with what to look for in each;
+`python3 -I upstream-check.py changed` lists what is new since
+`upstream-state.json`. A SessionStart hook (`upstream-check.py hook`, in
+the user settings) reminds when it is due.
 
 ## Working on the emulators
 
