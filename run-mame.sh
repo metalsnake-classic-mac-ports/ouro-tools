@@ -23,5 +23,7 @@ set -- -rompath "$TOOLS/roms/mame" -skip_gameinfo \
     -nvram_directory "$WORK/nvram" -cfg_directory "$WORK/cfg" \
     -snapshot_directory "$WORK/snap" -state_directory "$WORK/sta" "$@"
 [ -n "$MAME_DRIVE" ] && set -- -autoboot_script "$TOOLS/re/mame/drive.lua" -autoboot_delay 0 "$@"
-[ -n "$MAME_HEADLESS" ] && set -- -video none -sound none -nothrottle "$@"
+# -video none alone still opens an empty full-screen window on macOS (SDL
+# creates it); SDL's dummy driver opens none.
+[ -n "$MAME_HEADLESS" ] && export SDL_VIDEODRIVER=dummy && set -- -video none -sound none -nothrottle "$@"
 exec mame "$MACHINE" "$@"

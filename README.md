@@ -137,7 +137,8 @@ HD SC Setup 7.0.1's, which is on `System70_boot.dsk`):
 
 `run-mame.sh <machine> <work dir> [options]` sets the ROM path and keeps
 PRAM, settings and screenshots in the work dir; `MAME_HEADLESS=1` runs
-without window and sound at full speed (6-10× real time), `MAME_DRIVE`
+without window (SDL's dummy video driver: `-video none` alone leaves an
+empty full-screen window on macOS) and sound at full speed (6-10× real time), `MAME_DRIVE`
 loads `re/mame/drive.lua` (its header lists the verbs). Example: S.C.Out
 (set to "system display", see Ouro-S.C.Out NOTES.md) from Startup Items to
 level 1 and its map (`A5-0x6546`) dumped:
