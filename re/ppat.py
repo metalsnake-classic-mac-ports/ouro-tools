@@ -5,7 +5,8 @@ its PixMap and pixel data, and an 8x8 1-bit fallback pattern (pat1Data,
 for 1-bit screens). The PixMap (rowBytes with the 0x8000 flag, bounds,
 pixelSize 1/2/4/8, pmTable = offset of the colour table in the resource)
 describes one tile; the pixel data is not packed. patType 0 is a plain
-8x8 1-bit pattern (black on white).
+8x8 1-bit pattern (black on white); patType 3 a direct-colour one (16 or
+32 bits a pixel, no colour table; see decode_direct).
 
 decode(data) -> (width, height, rgb rows as bytes, info dict)
 
@@ -27,11 +28,13 @@ def decode(d):
         rows = [b"".join(bytes((0, 0, 0) if (b >> (7 - x)) & 1 else (255, 255, 255))
                          for x in range(8)) for b in pat1]
         return 8, 8, rows, {"type": 0, "depth": 1}
-    if pat_type != 1:
+    if pat_type not in (1, 3):
         raise ValueError("patType %d not supported" % pat_type)
     row_bytes = struct.unpack(">H", d[pmap + 4:pmap + 6])[0] & 0x3FFF
     top, left, bottom, right = struct.unpack(">hhhh", d[pmap + 6:pmap + 14])
     depth = struct.unpack(">H", d[pmap + 32:pmap + 34])[0]
+    if pat_type == 3:
+        return decode_direct(d, pdata, row_bytes, right - left, bottom - top, depth, pat1)
     ct = struct.unpack(">I", d[pmap + 42:pmap + 46])[0]
     _, flags, size = struct.unpack(">IHH", d[ct:ct + 8])
     pal = [(0, 0, 0)] * 256
@@ -51,6 +54,30 @@ def decode(d):
     info = {"type": 1, "depth": depth, "colors": size + 1,
             "pat1": pat1.hex(), "palette": pal[:size + 1]}
     return w, h, rows, info
+
+
+def decode_direct(d, pdata, row_bytes, w, h, depth, pat1):
+    """patType 3 (not in Inside Macintosh, which documents 0-2; it came with
+    32-Bit QuickDraw): a direct-colour pixel pattern - pixelType 16, 16-bit
+    pixels x RRRRR GGGGG BBBBB or 32-bit pixels x R G B, no colour table.
+    Gives the colours as stored; an 8-bit screen shows the nearest ones of
+    its palette."""
+    rows = []
+    for y in range(h):
+        line = d[pdata + y * row_bytes:pdata + (y + 1) * row_bytes]
+        px = []
+        for x in range(w):
+            if depth == 16:
+                v = struct.unpack(">H", line[2 * x:2 * x + 2])[0]
+                # 5 bits a channel, widened as QuickDraw does (the top bits repeated)
+                r, g, b = ((v >> 10) & 31, (v >> 5) & 31, v & 31)
+                px.append(bytes(((c << 3) | (c >> 2)) for c in (r, g, b)))
+            elif depth == 32:
+                px.append(line[4 * x + 1:4 * x + 4])
+            else:
+                raise ValueError("direct pattern of %d bits" % depth)
+        rows.append(b"".join(px))
+    return w, h, rows, {"type": 3, "depth": depth, "pat1": pat1.hex()}
 
 
 if __name__ == "__main__":
