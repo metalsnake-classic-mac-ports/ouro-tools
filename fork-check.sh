@@ -4,6 +4,12 @@
 #   fork-check.sh changed    list forks whose branches moved since fork-heads.tsv
 #                            (new forks, new or moved branches), one line each
 #   fork-check.sh snapshot   rewrite fork-heads.tsv with the current branch heads
+#   fork-check.sh ahead      every branch in fork-heads.tsv that has commits its base
+#                            lacks: date of its head, commits ahead, commits behind,
+#                            repository, branch - newest first. The base is
+#                            kanjitalk755/macemu master, for PocketShaver forks
+#                            carbjo/PocketShaver master. Asks GitHub's compare API,
+#                            clones nothing (about two calls per branch)
 #   fork-check.sh due        print "due since DATE" when the last check in
 #                            FORK-CHECK.md is more than a month old, else nothing
 #   fork-check.sh hook       Claude Code SessionStart hook: the same as a context
@@ -51,6 +57,38 @@ changed)
         echo "$r $b ${old:-new}"
     done
     rm -f "$HEADS.now"
+    ;;
+ahead)
+    [ -f "$HEADS" ] || { echo "no $HEADS yet: run snapshot" >&2; exit 1; }
+    # One line "repository branch sha base" per branch (branch names contain no
+    # spaces), then eight compare calls at a time. The head is given by its sha,
+    # which GitHub resolves across the fork network, so branch names with "/"
+    # need no escaping.
+    while IFS="$(printf '\t')" read -r repository branch sha; do
+        case "$repository" in
+        carbjo/PocketShaver) base=kanjitalk755/macemu ;;
+        */PocketShaver)      base=carbjo/PocketShaver ;;
+        *)                   base=kanjitalk755/macemu ;;
+        esac
+        echo "$repository $branch $sha $base"
+    done < "$HEADS" |
+    xargs -n 4 -P 8 sh -c '
+        repository=$1 branch=$2 sha=$3 base=$4
+        compare() {
+            gh api "repos/$base/compare/master...$1?per_page=1" \
+                --jq "\"\(.ahead_by) \(.behind_by)\"" 2>/dev/null
+        }
+        # GitHub does not find every sha in the network (404); then name the
+        # head as owner:repository:branch, with "/" in the branch escaped.
+        owner_head="$(echo "$repository" | tr / :):$(echo "$branch" | sed "s|/|%2F|g")"
+        counts=$(compare "$sha") || counts=$(compare "$owner_head") || {
+            printf "?\t?\t?\t%s\t%s\t(compare failed)\n" "$repository" "$branch"; exit 0; }
+        set -- $counts
+        ahead=$1 behind=$2
+        [ "$ahead" -gt 0 ] || exit 0
+        date=$(gh api "repos/$repository/commits/$sha" --jq ".commit.committer.date[:10]" 2>/dev/null || echo "?")
+        printf "%s\t%s\t%s\t%s\t%s\n" "$date" "$ahead" "$behind" "$repository" "$branch"
+    ' sh | sort -r
     ;;
 due)
     last=$(sed -n 's/^Last check: \([0-9-]*\).*/\1/p' FORK-CHECK.md | head -1)

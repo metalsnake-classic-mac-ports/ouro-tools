@@ -266,7 +266,9 @@ published yet.
 Once a month the forks of kanjitalk755/macemu are checked for changes
 worth taking into ouro-macemu: `FORK-CHECK.md` holds the date of the last
 check, the procedure and the open candidates; `fork-check.sh changed` lists
-the fork branches that moved since `fork-heads.tsv`. In Claude Code a
+the fork branches that moved since `fork-heads.tsv`; `fork-check.sh ahead`
+lists every branch with commits upstream lacks, moved or not, and
+`fork-triage.py` narrows those to the commits that touch our build. In Claude Code a
 SessionStart hook (`fork-check.sh hook`, in the user settings) reminds when
 the check is due.
 

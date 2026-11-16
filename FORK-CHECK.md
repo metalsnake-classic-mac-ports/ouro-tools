@@ -21,6 +21,13 @@ reminds when the date above is more than a month old.
    deterministic time. Not: iOS, Android, Windows-only, JIT, Metal/gfxaccel,
    Mac OS X guests - unless a commit also fixes a generic bug.
 4. Look at Ploos-AS/MacSandbox even when quiet (below).
+   `changed` never lists a branch that has not moved since it entered
+   `fork-heads.tsv`. Every branch that was there on 2026-11-06 was reviewed
+   once on 2026-11-16 (below); to repeat that for all branches,
+   `./fork-check.sh ahead > ahead.tsv` lists every branch with commits its
+   base lacks, and `python3 -I fork-triage.py ahead.tsv SCRATCH` fetches
+   them blobless and prints the commits left after dropping upstream
+   subjects and paths outside our build.
 5. Write the findings into "Open" / "Decided" here, set "Last check", then
    `./fork-check.sh snapshot`, and commit both files.
 
@@ -79,6 +86,37 @@ the source named), add it to ouro-macemu's README list, rebuild with
 - The emulator monitor's newer commands `deploy`, `find`, `cat`, `fetch`
   (RandoOnSteam `4b4b99db`, `72c4b633`) live in the native client
   (`tools/emumonitor.c`), not in the emulator; `disks` is already in `ouro`.
+
+## Review of the first snapshot (2026-11-16)
+
+The branches already in the first `fork-heads.tsv` (2026-11-06) were never
+listed by `changed`. `fork-check.sh ahead` found 284 branches in 113
+repositories with commits their base lacks; `fork-triage.py` left 1540
+distinct commits after dropping 1008 with an upstream subject and 1307 that
+touch only paths outside our build. Nothing worth taking:
+
+- Own projects, most of the commits: rcarmo/macemu-jit and dtseto (68k JIT
+  for arm64), sirmick (Unicorn core, WebRTC streaming), mihaip (Infinite Mac,
+  Emscripten), billcavalieri (sheepforce, see "Decided"), brnrds /
+  rscaboyke / carbjo PocketShaver (iOS), raytran08 (NetBSD wscons),
+  audiocontrol-org (MIDI over SCSI), Photosounder (WAHE / Wasm), kwhr0 (its
+  own 68020 / PPC interpreters), agranlund (Atari), andyvand (Android),
+  PegLeg-Computer and GillesXP `zydeco_rootless` (rootless mode), robxnano
+  (Meson, Qt prefs), mylordmonkeyman (libretro), Cronocide (RAVE / GL and
+  the arm64 JIT; its test-and-set fix `ad80ac80` is the one `ouro` already
+  has from e-z-g).
+- Small and generic, but nothing a game run needs: Photosounder `1287f5a2`
+  (extfs: clamp file sizes over 2 GB), omega1119 (Z8530 SCC emulation),
+  DMJC (SDL joystick as ADB), dbarth (`onclose` pref, UDP tunnel,
+  IOSurface screen share), mstevenson (window and cursor scaling, Fn-F
+  full screen), robxnano `e2a210ef` (no keyboard shortcuts while the mouse
+  is grabbed), Motardo (F3 as power key), mborjesson (`sdl_nofsscale`),
+  timothy-fuchs (screen rotation), schinkelg (libslirp).
+- cebix-era fixes missing from kanjitalk755's master: SLiRP buffer
+  overflows (`d26ae37e`), cxmon prompt buffer (`b04dc5e5`) - networking and
+  cxmon are not used in our runs.
+- Old kanjitalk755 test branches carried by forks (GillesXP, mattjvw,
+  armcknight, DrLex0) and build fixes for older or other systems.
 
 ## Ploos-AS/MacSandbox
 
