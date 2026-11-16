@@ -54,6 +54,17 @@ the source named), add it to ouro-macemu's README list, rebuild with
 - 2026-11-14, not taken: RandoOnSteam `48319f9f` (stops zeroing r28, the
   68k VBR, in `execute_68k`; no reason given beyond a force-quit crash) -
   only if that crash shows up here.
+- 2026-11-16, not taken: billcavalieri `sheepforce` (head `6e90d26c`, 301
+  commits, ~137,000 lines, 29 commits behind upstream): its own SheepShaver
+  line - New World JIT for arm64, Metal / RAVE, a SwiftUI app with several
+  VMs and an MCP server, "SheepBlaster" sound, guest tools (Sheep Shears,
+  SheepBench), qcow / CHD images. The fixes that look generic are tied to
+  that rework: `e1c6cd69` (lha / lhau) is in its own JIT (`nw_jit.cpp`),
+  the `ppc-cpu.cpp` part is logging only; `f69ca9aa` and `b9086202` (crash
+  at the end of a sound) depend on its SheepBlaster state. Only `7bbd2aa0`
+  stands alone (Disk First Aid lists hard disks and CDs as floppies: the
+  disk and CD drivers refuse Control 23 and number drives from 3) - a
+  cosmetic Disk First Aid issue, not needed for the games.
 - Not taken: e-z-g `be111582` (`[present]` lines every ten seconds without
   a switch); everything Android, iOS / Mac Catalyst, Metal gfxaccel, JIT,
   Mac OS X guests; RandoOnSteam `fea656ee` / `c73ed75d` (ISO / TOAST CD
