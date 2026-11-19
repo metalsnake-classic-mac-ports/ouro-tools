@@ -252,7 +252,7 @@ in a venv, run with `python3 -I`.
 | `mkscsidisk.py` | a bare HFS volume (a Basilisk II disk) → a bootable SCSI disk for MAME: driver descriptor, partition map, driver, Apple_HFS |
 | `mame/drive.lua` | MAME: timed keys, screenshots, globals dumps, registers and call chain (`run-mame.sh`, `MAME_DRIVE`) |
 | `machine.py` | 68k code in Unicorn for differential tests: segments, A5 globals, jump table, trap stubs; condition codes from stubs only through `set_ccr` (SR writes are refused: Unicorn loses them, checked at start-up) |
-| `ghidra/` | 68k: replace A-line traps, decompile all segments headless |
+| `ghidra/` | 68k: replace A-line traps, decompile all segments headless (`decompile_all.sh`: functions from the jump table and every LINK A6); `decompile_at.sh WORK SEG OFFSET...` decompiles single routines in that project without changing it - one Ghidra did not find (no LINK A6, an entry into another routine) is made for the run - with the Toolbox traps of each listed by name |
 | `ppc/pef_traceback.py` | PEF: routine starts and names from traceback tables |
 | `ppc/run_ghidra.sh`, `ppc/ghidra/` | PEF into Ghidra: names, TOC, TVectors, globals, a struct; decompile everything |
 | `ppc/ppcdis.py`, `ppc/ppc_switch.py` | PowerPC disassembly with names; CodeWarrior switch tables |

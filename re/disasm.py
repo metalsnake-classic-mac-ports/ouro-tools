@@ -12,8 +12,6 @@ import re
 import struct
 import sys
 
-import capstone
-
 # run with python3 -I: this folder is not on the path then
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
@@ -182,6 +180,9 @@ def main():
     code = open(f"{work}/code/seg{seg:02d}.bin", "rb").read()
     end = min(end, len(code) - 1)
     table = jump_table(work)
+    # here, so the trap names can be imported without capstone
+    import capstone
+
     md = capstone.Cs(capstone.CS_ARCH_M68K, capstone.CS_MODE_M68K_020 | capstone.CS_MODE_BIG_ENDIAN)
     md.skipdata = True
     at = start
