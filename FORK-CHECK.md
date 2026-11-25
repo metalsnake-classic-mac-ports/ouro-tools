@@ -39,12 +39,20 @@ the source named), add it to ouro-macemu's README list, rebuild with
 
 | Fork | Commit | What | Note |
 |---|---|---|---|
-| kanjitalk755/macemu `master` | [`9107beb2`](https://github.com/kanjitalk755/macemu/commit/9107beb2), [`37a86824`](https://github.com/kanjitalk755/macemu/commit/37a86824) | ExtFS: minimal Mac OS 9 fixes ([PR #330](https://github.com/kanjitalk755/macemu/pull/330), replaces the closed #329: buffer bounds in GetVol / GetFInfo / SetFInfo, OpenDF and MakeFSSpec dispatch, stale CNIDs retired); audio_sdl3 shutdown deadlock (#331) | 2026-11-25: `ouro` rebases cleanly onto this master; the rebase drops our cherry-picks of `e2989b65` / `40bbf669` and our extfs `GetFileInfo` fix (RandoOnSteam `9bc0c66f`), which #330 contains. Needs a force-push of `ouro` |
-| invariablyafk/macemu `fix-mach-timer-lost-wakeup` | [`c338b1ed`](https://github.com/invariablyafk/macemu/commit/c338b1edab90fa0355134ab71d7f20de9f1819c3) | `timer.cpp`, `PRECISE_TIMING_MACH`: the timer thread could sleep past a wake-up that `PrimeTime()` moved earlier (thread_abort before clock_sleep aborts nothing), so Time Manager tasks went overdue for seconds or for good; now a condition variable under a mutex | 2026-11-25: our macOS build uses exactly this path (no `clock_nanosleep`, so `PRECISE_TIMING_MACH`, Basilisk II and SheepShaver); games that time with the Time Manager can be hit. Recommended; not yet a PR upstream |
 | RandoOnSteam/PocketShaver | `dab4f849`, `3d8c410e`, `495096d4`, `4c08ce77` | SoundBase emulation and VIA redirect (behind `MACEMU_USEVIASOUNDBASE`, ~120 lines in `audio.cpp`): sound for games that write the sound buffer and VIA directly (Populous) | watch: would matter if a port's original plays sound through SoundBase; mixed with SFL / SDL3 changes, would need splitting |
 | RandoOnSteam/PocketShaver | `41ca2f49` | "a host of stalls, hangs, crashes": the ADB part (`adb.cpp`) may matter, the rest is JIT / CMake | watch; mixed commit, would need splitting |
 
 ## Decided
+
+- 2026-11-25, taken: `ouro` rebased onto kanjitalk755 `master` `0407cbd5`
+  (ExtFS #330, audio_sdl3 #331); the rebase dropped our cherry-picks of
+  `e2989b65` / `40bbf669` and the RandoOnSteam extfs `GetFileInfo` fix,
+  all upstream now. On top: invariablyafk `c338b1ed` (lost Mach timer
+  wake-ups), cherry-picked. Built; SheepShaver boots Mac OS 9.0.4 to the
+  Finder with the Unix volume, Basilisk II runs S.C.Out level 1 at 60
+  game frames and 60 Mac ticks per second (`SCOUT_FPS=1`, headless through
+  the emulator monitor). Not reproduced: the lost wake-up itself (seen by
+  its author with MacTCP under network load).
 
 - 2026-11-14, taken onto `ouro` by cherry-pick `-x` (pushed 2026-11-14):
   upstream `e2989b65` (fatal Mach exceptions without GUI teardown) and
