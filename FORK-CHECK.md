@@ -40,9 +40,18 @@ the source named), add it to ouro-macemu's README list, rebuild with
 | Fork | Commit | What | Note |
 |---|---|---|---|
 | RandoOnSteam/PocketShaver | `dab4f849`, `3d8c410e`, `495096d4`, `4c08ce77` | SoundBase emulation and VIA redirect (behind `MACEMU_USEVIASOUNDBASE`, ~120 lines in `audio.cpp`): sound for games that write the sound buffer and VIA directly (Populous) | watch: would matter if a port's original plays sound through SoundBase; mixed with SFL / SDL3 changes, would need splitting |
-| RandoOnSteam/PocketShaver | `41ca2f49` | "a host of stalls, hangs, crashes": the ADB part (`adb.cpp`) may matter, the rest is JIT / CMake | watch; mixed commit, would need splitting |
 
 ## Decided
+
+- 2026-11-25, not taken: RandoOnSteam `41ca2f49` ("a host of stalls,
+  hangs, crashes"). Its `adb.cpp` part fixes PocketShaver's own ADB rewrite
+  (~3000 lines against upstream's 485): no more `NewPtrSysClear` from the
+  ADB interrupt (the scratch block is now allocated in `InstallDrivers`),
+  and each click carries the position it was made at, delivered one tick
+  after the cursor moved there. Upstream's `adb.cpp`, which `ouro` uses,
+  allocates nothing there; clicks from the emulator monitor already wait
+  for the move to settle (`Settle()`) before pressing. The audio part is
+  `USE_SDL1` only, the rest is JIT, CMake, ether and the monitor client.
 
 - 2026-11-25, taken: `ouro` rebased onto kanjitalk755 `master` `0407cbd5`
   (ExtFS #330, audio_sdl3 #331); the rebase dropped our cherry-picks of
