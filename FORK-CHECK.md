@@ -1,6 +1,6 @@
 # macemu fork check
 
-Last check: 2026-11-14
+Last check: 2026-11-25
 
 Once a month the forks of kanjitalk755/macemu are checked for changes worth
 taking into [ouro-macemu](https://github.com/metalsnake-classic-mac-ports/ouro-macemu)
@@ -39,7 +39,8 @@ the source named), add it to ouro-macemu's README list, rebuild with
 
 | Fork | Commit | What | Note |
 |---|---|---|---|
-| asvitkine/macemu `extfs-macos9-fixes-upstream` | [`88f45de1`](https://github.com/asvitkine/macemu/commit/88f45de1), [`9b9fa73a`](https://github.com/asvitkine/macemu/commit/9b9fa73a) | ExtFS rework (~2000 lines in `extfs.cpp`): Mac OS 9 File Manager / catalog consistency, NavigationLib crash | branch dated 2026-11-14, by the upstream maintainer, [PR #329](https://github.com/kanjitalk755/macemu/pull/329) (open); decided 2026-11-14: wait until it lands on master, then it comes with the rebase. Matters for shared folders under Mac OS 9 |
+| kanjitalk755/macemu `master` | [`9107beb2`](https://github.com/kanjitalk755/macemu/commit/9107beb2), [`37a86824`](https://github.com/kanjitalk755/macemu/commit/37a86824) | ExtFS: minimal Mac OS 9 fixes ([PR #330](https://github.com/kanjitalk755/macemu/pull/330), replaces the closed #329: buffer bounds in GetVol / GetFInfo / SetFInfo, OpenDF and MakeFSSpec dispatch, stale CNIDs retired); audio_sdl3 shutdown deadlock (#331) | 2026-11-25: `ouro` rebases cleanly onto this master; the rebase drops our cherry-picks of `e2989b65` / `40bbf669` and our extfs `GetFileInfo` fix (RandoOnSteam `9bc0c66f`), which #330 contains. Needs a force-push of `ouro` |
+| invariablyafk/macemu `fix-mach-timer-lost-wakeup` | [`c338b1ed`](https://github.com/invariablyafk/macemu/commit/c338b1edab90fa0355134ab71d7f20de9f1819c3) | `timer.cpp`, `PRECISE_TIMING_MACH`: the timer thread could sleep past a wake-up that `PrimeTime()` moved earlier (thread_abort before clock_sleep aborts nothing), so Time Manager tasks went overdue for seconds or for good; now a condition variable under a mutex | 2026-11-25: our macOS build uses exactly this path (no `clock_nanosleep`, so `PRECISE_TIMING_MACH`, Basilisk II and SheepShaver); games that time with the Time Manager can be hit. Recommended; not yet a PR upstream |
 | RandoOnSteam/PocketShaver | `dab4f849`, `3d8c410e`, `495096d4`, `4c08ce77` | SoundBase emulation and VIA redirect (behind `MACEMU_USEVIASOUNDBASE`, ~120 lines in `audio.cpp`): sound for games that write the sound buffer and VIA directly (Populous) | watch: would matter if a port's original plays sound through SoundBase; mixed with SFL / SDL3 changes, would need splitting |
 | RandoOnSteam/PocketShaver | `41ca2f49` | "a host of stalls, hangs, crashes": the ADB part (`adb.cpp`) may matter, the rest is JIT / CMake | watch; mixed commit, would need splitting |
 
@@ -61,6 +62,19 @@ the source named), add it to ouro-macemu's README list, rebuild with
 - 2026-11-14, not taken: RandoOnSteam `48319f9f` (stops zeroing r28, the
   68k VBR, in `execute_68k`; no reason given beyond a force-quit crash) -
   only if that crash shows up here.
+- 2026-11-25, not taken: asvitkine `feat/gfxaccel-*`, `feat/rave-metal`,
+  `fix/gfxaccel-*` (gfxaccel / RAVE / Metal backports from PocketShaver;
+  `5c8c439b`, which keeps InstallExtFS() from running twice, only matters
+  with gfxaccel's accRun sweeps) and `fix/sdl3-recenter-on-resize` (SDL3
+  video, we build SDL2); invariablyafk `fix-slirp-syn-template` (slirp TCP,
+  networking unused); Cronocide (RAVE / GL); RandoOnSteam (OS X guest, GL
+  engine, multi-CPU, SFL, Intel JIT); carbjo / sierra760 PocketShaver
+  (iOS, Catalyst); the other invariablyafk and hghpublic branches are old
+  kanjitalk755 test branches or match upstream.
+- Idea, not code to take: mihaip `77276172` reports every resource load
+  from the `CheckLoad` hook to Infinite Mac's worker. The same hook could
+  log which resources a game loads (type, id, size) behind an environment
+  variable - useful when reverse engineering a port's original.
 - 2026-11-16, not taken: billcavalieri `sheepforce` (head `6e90d26c`, 301
   commits, ~137,000 lines, 29 commits behind upstream): its own SheepShaver
   line - New World JIT for arm64, Metal / RAVE, a SwiftUI app with several
