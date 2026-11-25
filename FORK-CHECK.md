@@ -88,10 +88,9 @@ the source named), add it to ouro-macemu's README list, rebuild with
   engine, multi-CPU, SFL, Intel JIT); carbjo / sierra760 PocketShaver
   (iOS, Catalyst); the other invariablyafk and hghpublic branches are old
   kanjitalk755 test branches or match upstream.
-- Idea, not code to take: mihaip `77276172` reports every resource load
-  from the `CheckLoad` hook to Infinite Mac's worker. The same hook could
-  log which resources a game loads (type, id, size) behind an environment
-  variable - useful when reverse engineering a port's original.
+- Done 2026-11-25, as our own code after mihaip `77276172` (resource
+  loads reported from the `CheckLoad` hook): `MACEMU_TRACE_RSRC` in
+  ouro-macemu (`f3401c26`, see its README).
 - 2026-11-16, not taken: billcavalieri `sheepforce` (head `6e90d26c`, 301
   commits, ~137,000 lines, 29 commits behind upstream): its own SheepShaver
   line - New World JIT for arm64, Metal / RAVE, a SwiftUI app with several
